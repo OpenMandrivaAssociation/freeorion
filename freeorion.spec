@@ -31,7 +31,6 @@ BuildRequires:	log4cpp-devel
 BuildRequires:	freealut-devel
 BuildRequires:	gigi-devel
 BuildRequires:	boost-devel >= 1.37.0
-BuildRequires:	boost-static-devel >= 1.37.0
 BuildRequires:	ogre-devel >= 1.4.6
 BuildRequires:	bullet-devel
 ##### Description #####
@@ -62,12 +61,12 @@ Data files for FreeOrion game
 %patch1 -p0
 
 %configure_scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
-with_gg=%{_libdir} --install=%{buildroot}
+with_gg=%{_libdir} --install=%{buildroot} 
 
 %build
 
 %scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
---install=%{buildroot}
+--install=%{buildroot} boost_lib_suffix=-mt
 
 
 %install
