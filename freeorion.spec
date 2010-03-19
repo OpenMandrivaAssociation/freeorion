@@ -31,6 +31,7 @@ BuildRequires:	log4cpp-devel
 BuildRequires:	freealut-devel
 BuildRequires:	gigi-devel
 BuildRequires:	boost-devel >= 1.37.0
+BuildRequires:	boost-static-devel >= 1.37.0
 BuildRequires:	ogre-devel >= 1.4.6
 BuildRequires:	bullet-devel
 ##### Description #####
