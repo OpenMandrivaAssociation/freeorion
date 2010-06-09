@@ -1,6 +1,6 @@
-%define version 0.3.13
-%define revision 3383
-%define release %mkrel 0.svn%{revision}.1 
+%define version 0.3.14
+%define revision 3571
+%define release %mkrel 0.1.%{revision}
 %define libname %mklibname %name 0 
 
 
@@ -8,11 +8,11 @@ Summary:	Turn-based space empire and galactic conquest game (4X)
 Name:		freeorion
 Version:	%{version}
 Release:	%{release}
-Source0:	%{name}-%{version}-0.svn%{revision}.tar.lzma
+Source0:	%{name}-%{version}.tar.lzma
 Source1:	%{name}.png
 Patch0:		freeorion-0.3.13-version-fix.patch
 Patch1:		freeorion-0.3.13-ogre-plugin-fix.patch
-License:	GPL & CC-BY-SA
+License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}
@@ -33,6 +33,7 @@ BuildRequires:	gigi-devel
 BuildRequires:	boost-devel >= 1.37.0
 BuildRequires:	ogre-devel >= 1.4.6
 BuildRequires:	bullet-devel
+
 ##### Description #####
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic 
@@ -45,14 +46,6 @@ parts don't work/aren't implemented yet, and that whole game should be
 considered pre-alpha stage at this time and that includes battles tech
 demo! Don't be mad at us, we warned you.
 
-##### Subpackages ... game + data #####
-%package -n     %{name}-data
-Summary:	FreeOrion game data files
-Group:		Games/Strategy
-BuildArch:	noarch
-%description -n %{name}-data
-Data files for FreeOrion game
-
 ##### Prep, Setup, Build, Install #####
 
 %prep
@@ -61,13 +54,12 @@ Data files for FreeOrion game
 %patch1 -p0
 
 %configure_scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
-with_gg=%{_libdir} --install=%{buildroot} 
+with_gg=%{_libdir} boost_lib_suffix=-mt --install=%{buildroot} debug=0 --config=force
 
 %build
 
 %scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
---install=%{buildroot} boost_lib_suffix=-mt
-
+--install=%{buildroot}
 
 %install
 
@@ -77,7 +69,9 @@ rm -rf %{buildroot}
 mkdir -p %{buildroot}/%{_iconsdir}
 cp %{SOURCE1} %{buildroot}/%{_iconsdir}
 cp ogre_plugins.cfg %{buildroot}/%{_gamesbindir}/
+
 echo PluginFolder=%{_libdir}/OGRE >> %{buildroot}/%{_gamesbindir}/ogre_plugins.cfg
+sed -i -e '1d;2i#!/usr/bin/python' %{buildroot}/%{_gamesdatadir}/%{name}/default/AI/AIstate.py
 
 mkdir -p %{buildroot}%{_datadir}/applications
 
@@ -87,7 +81,7 @@ Name=FreeOrion
 Comment=Space empire and galactic conquest (4X) game
 Exec=%{_gamesbindir}/%{name}
 Path=%{_gamesbindir}
-Icon=%{name}.png
+Icon=%{name}
 Terminal=false
 Type=Application
 Categories=Game;StrategyGame;
@@ -101,6 +95,16 @@ rm -rf %{buildroot}
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 %endif
+
+##### Subpackages ... game + data #####
+%package -n     %{name}-data
+Summary:	FreeOrion game data files
+Group:		Games/Strategy
+BuildArch:	noarch
+License:	CC-BY-SA
+
+%description -n %{name}-data
+Data files for FreeOrion game
 
 ##### Files #####
 
