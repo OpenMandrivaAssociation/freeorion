@@ -1,122 +1,102 @@
-%define version 0.3.14
-%define revision 3571
-%define release %mkrel 0.1.%{revision}
-%define libname %mklibname %name 0 
-
-
-Summary:	Turn-based space empire and galactic conquest game (4X)
 Name:		freeorion
-Version:	%{version}
-Release:	%{release}
-Source0:	%{name}-%{version}.tar.lzma
-Source1:	%{name}.png
-Patch0:		freeorion-0.3.13-version-fix.patch
-Patch1:		freeorion-0.3.13-ogre-plugin-fix.patch
+Version:	0.3.15
+Release:	%mkrel 1
+Summary:	Turn-based space empire and galactic conquest
 License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}
-
-Requires:	python graphviz gigi ogre 
-Requires:	%{name}-data = %{version}-%{release}
-BuildRequires:	scons 
-BuildRequires:	python-devel 
-BuildRequires:	freetype2-devel 
+Source0:	%{name}-%{version}.tar.gz
+Source1:	%{name}.png
+Patch0:     freeorion-0.3.15-fix-link.patch
+Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
+Patch2:     freeorion-0.3.15-force-data-location.patch
+BuildRequires:	python-devel
+BuildRequires:	freetype2-devel
+BuildRequires:	devil-devel
 BuildRequires:	libvorbis-devel
-BuildRequires:	SDL-devel 
-BuildRequires:	graphviz-devel 
-BuildRequires:	openal-devel 
+BuildRequires:	graphviz-devel
 BuildRequires:	libogg-devel
+BuildRequires:	openal-devel
+BuildRequires:	SDL-devel
 BuildRequires:	log4cpp-devel
 BuildRequires:	freealut-devel
-BuildRequires:	gigi-devel
 BuildRequires:	boost-devel >= 1.37.0
 BuildRequires:	ogre-devel >= 1.4.6
+BuildRequires:	gigi-devel
 BuildRequires:	bullet-devel
+BuildRequires:	cmake
+BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}
 
-##### Description #####
 %description
-FreeOrion is a free, open source, turn-based space empire and galactic 
-conquest (4X) computer game being designed and built by the FreeOrion 
-project. FreeOrion is inspired by the tradition of the Master of Orion 
-games, but is not a clone or remake of that series or any other game. 
+FreeOrion is a free, open source, turn-based space empire and galactic conquest
+(4X) computer game being designed and built by the FreeOrion project. FreeOrion
+is inspired by the tradition of the Master of Orion games, but is not a clone
+or remake of that series or any other game.
 
-PLEASE be aware that this is work in progress and lot of important game
-parts don't work/aren't implemented yet, and that whole game should be 
-considered pre-alpha stage at this time and that includes battles tech
-demo! Don't be mad at us, we warned you.
-
-##### Prep, Setup, Build, Install #####
-
-%prep
-%setup -q -n FreeOrion
-%patch0 -p0
-%patch1 -p0
-
-%configure_scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
-with_gg=%{_libdir} boost_lib_suffix=-mt --install=%{buildroot} debug=0 --config=force
-
-%build
-
-%scons bindir=%{_gamesbindir} datadir=%{_gamesdatadir}/freeorion \
---install=%{buildroot}
-
-%install
-
-rm -rf %{buildroot}
-%scons_install --install=%{buildroot}
-
-mkdir -p %{buildroot}/%{_iconsdir}
-cp %{SOURCE1} %{buildroot}/%{_iconsdir}
-cp ogre_plugins.cfg %{buildroot}/%{_gamesbindir}/
-
-echo PluginFolder=%{_libdir}/OGRE >> %{buildroot}/%{_gamesbindir}/ogre_plugins.cfg
-sed -i -e '1d;2i#!/usr/bin/python' %{buildroot}/%{_gamesdatadir}/%{name}/default/AI/AIstate.py
-
-mkdir -p %{buildroot}%{_datadir}/applications
-
-cat > %{buildroot}%{_datadir}/applications/mandriva-%{name}.desktop << EOF
-[Desktop Entry]
-Name=FreeOrion
-Comment=Space empire and galactic conquest (4X) game
-Exec=%{_gamesbindir}/%{name}
-Path=%{_gamesbindir}
-Icon=%{name}
-Terminal=false
-Type=Application
-Categories=Game;StrategyGame;
-EOF
-
-##### Clean #####
-%clean
-rm -rf %{buildroot}
-
-%if %mdkversion < 200900
-%post -p /sbin/ldconfig
-%postun -p /sbin/ldconfig
-%endif
-
-##### Subpackages ... game + data #####
-%package -n     %{name}-data
+%package data
 Summary:	FreeOrion game data files
 Group:		Games/Strategy
 BuildArch:	noarch
 License:	CC-BY-SA
 
-%description -n %{name}-data
+%description data
 Data files for FreeOrion game
 
-##### Files #####
+%prep
+%setup -q -n trunk/FreeOrion
+%patch0 -p 2
+%patch1 -p 2
+%patch2 -p 2
+
+%build
+%cmake \
+    -DCMAKE_MODULE_PATH=%{_datadir}/cmake/Modules/GG
+%make
+
+%install
+rm -rf %{buildroot}
+
+install -d -m 755 %{buildroot}%{_gamesbindir}
+install -m 755 build/freeorion* %{buildroot}%{_gamesbindir}
+
+install -d -m 755 %{buildroot}%{_gamesdatadir}/%{name}
+cp -ar default %{buildroot}%{_gamesdatadir}/%{name}
+
+install -d -m 755 %{buildroot}%{_iconsdir}
+install -m 644 %{SOURCE1} %{buildroot}%{_iconsdir}
+
+install -d -m 755 %{buildroot}%{_datadir}/applications
+cat > %{buildroot}%{_datadir}/applications/mandriva-%{name}.desktop << EOF
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=FreeOrion
+Comment=Turn-based space empire and galactic conquest
+Exec=%{_gamesbindir}/%{name}
+Path=%{_gamesbindir}
+Icon=%{name}
+Terminal=false
+Categories=Game;StrategyGame;
+EOF
+
+install -m 644 ogre_plugins.cfg %{buildroot}%{_gamesdatadir}/%{name}
+perl -pi \
+    -e 's|PluginFolder=.*|PluginFolder=%{_libdir}/OGRE|' \
+    %{buildroot}%{_gamesdatadir}/%{name}/ogre_plugins.cfg
+
+#perl -pi -e '1d;2i#!/usr/bin/python' \
+#    %{buildroot}%{_gamesdatadir}/%{name}/default/AI/AIstate.py
+
+%clean
+rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
+%doc RELEASE-NOTES-V03.txt 
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
-%{_gamesbindir}/ogre_plugins.cfg
 %{_datadir}/applications/mandriva-freeorion.desktop
-%doc RELEASE-NOTES-V03.txt 
 
-%files -n %{name}-data
+%files data
 %defattr(-,root,root)
-%dir %{_gamesdatadir}/freeorion
-%{_gamesdatadir}/%{name}/*
+%{_gamesdatadir}/freeorion
