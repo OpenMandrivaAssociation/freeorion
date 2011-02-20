@@ -46,7 +46,7 @@ Data files for FreeOrion game
 %setup -q -n trunk/FreeOrion
 %patch0 -p 2
 %patch1 -p 2
-%patch2 -p 2
+#patch2 -p 2
 
 %build
 %cmake \
@@ -57,7 +57,16 @@ Data files for FreeOrion game
 rm -rf %{buildroot}
 
 install -d -m 755 %{buildroot}%{_gamesbindir}
-install -m 755 build/freeorion* %{buildroot}%{_gamesbindir}
+install -m 755 build/freeorion %{buildroot}%{_gamesbindir}/freeorion.real
+install -m 755 build/freeoriond %{buildroot}%{_gamesbindir}/freeoriond
+install -m 755 build/freeorionca %{buildroot}%{_gamesbindir}/freeorionca
+
+cat > %{buildroot}%{_gamesbindir}/freeorion <<EOF
+#!/bin/sh
+cd %{_gamesdatadir}/%{name}
+%{_gamesbindir}/freeorion.real
+EOF
+chmod +x %{buildroot}%{_gamesbindir}/freeorion
 
 install -d -m 755 %{buildroot}%{_gamesdatadir}/%{name}
 cp -ar default %{buildroot}%{_gamesdatadir}/%{name}
@@ -83,6 +92,7 @@ install -m 644 ogre_plugins.cfg %{buildroot}%{_gamesdatadir}/%{name}
 perl -pi \
     -e 's|PluginFolder=.*|PluginFolder=%{_libdir}/OGRE|' \
     %{buildroot}%{_gamesdatadir}/%{name}/ogre_plugins.cfg
+
 
 #perl -pi -e '1d;2i#!/usr/bin/python' \
 #    %{buildroot}%{_gamesdatadir}/%{name}/default/AI/AIstate.py
