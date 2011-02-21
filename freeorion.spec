@@ -1,6 +1,6 @@
 Name:		freeorion
 Version:	0.3.15
-Release:	%mkrel 1
+Release:	%mkrel 2
 Summary:	Turn-based space empire and galactic conquest
 License:	GPLv2
 Group:		Games/Strategy
