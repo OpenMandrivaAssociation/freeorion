@@ -1,6 +1,6 @@
 Name:		freeorion
 Version:	0.3.15
-Release:	%mkrel 2
+Release:	%mkrel 3
 Summary:	Turn-based space empire and galactic conquest
 License:	GPLv2
 Group:		Games/Strategy
@@ -10,11 +10,12 @@ Source1:	%{name}.png
 Patch0:     freeorion-0.3.15-fix-link.patch
 Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
 Patch2:     freeorion-0.3.15-force-data-location.patch
+Requires:   %{name}-data = %{version}
+Requires:   ogre
 BuildRequires:	python-devel
 BuildRequires:	freetype2-devel
 BuildRequires:	devil-devel
 BuildRequires:	libvorbis-devel
-BuildRequires:	graphviz-devel
 BuildRequires:	libogg-devel
 BuildRequires:	openal-devel
 BuildRequires:	SDL-devel
@@ -105,8 +106,11 @@ rm -rf %{buildroot}
 %doc RELEASE-NOTES-V03.txt 
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
+%{_gamesdatadir}/freeorion/ogre_plugins.cfg
 %{_datadir}/applications/mandriva-freeorion.desktop
+
 
 %files data
 %defattr(-,root,root)
 %{_gamesdatadir}/freeorion
+%exclude %{_gamesdatadir}/freeorion/ogre_plugins.cfg
