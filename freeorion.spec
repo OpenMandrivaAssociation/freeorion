@@ -50,6 +50,7 @@ Data files for FreeOrion game
 #patch2 -p 2
 
 %build
+export CXXFLAGS="%optflags -DBOOST_FILESYSTEM_VERSION=2"
 %cmake \
     -DCMAKE_MODULE_PATH=%{_datadir}/cmake/Modules/GG
 %make
