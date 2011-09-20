@@ -1,15 +1,15 @@
 Name:		freeorion
-Version:	0.3.15
-Release:	%mkrel 4
+Version:	0.3.16
+Release:	%mkrel 1
 Summary:	Turn-based space empire and galactic conquest
 License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
 Source0:	%{name}-%{version}.tar.gz
 Source1:	%{name}.png
-Patch0:     freeorion-0.3.15-fix-link.patch
-Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
-Patch2:     freeorion-0.3.15-force-data-location.patch
+#Patch0:     freeorion-0.3.15-fix-link.patch
+#Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
+#Patch2:     freeorion-0.3.15-force-data-location.patch
 Requires:   %{name}-data = %{version}
 Requires:   ogre
 BuildRequires:	python-devel
@@ -45,9 +45,9 @@ Data files for FreeOrion game
 
 %prep
 %setup -q -n trunk/FreeOrion
-%patch0 -p 2
-%patch1 -p 2
-#patch2 -p 2
+# % patch0 -p 2
+# % patch1 -p 2
+# % patch2 -p 2
 
 %build
 export CXXFLAGS="%optflags -DBOOST_FILESYSTEM_VERSION=2"
@@ -97,7 +97,7 @@ perl -pi \
 
 
 #perl -pi -e '1d;2i#!/usr/bin/python' \
-#    %{buildroot}%{_gamesdatadir}/%{name}/default/AI/AIstate.py
+#    % {buildroot} % {_gamesdatadir}/ % {name}/default/AI/AIstate.py
 
 %clean
 rm -rf %{buildroot}
