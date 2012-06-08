@@ -1,7 +1,7 @@
+Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
 Version:	0.3.16
-Release:	%mkrel 1
-Summary:	Turn-based space empire and galactic conquest
+Release:	2
 License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
@@ -10,8 +10,7 @@ Source1:	%{name}.png
 #Patch0:     freeorion-0.3.15-fix-link.patch
 #Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
 #Patch2:     freeorion-0.3.15-force-data-location.patch
-Requires:   %{name}-data = %{version}
-Requires:   ogre
+BuildRequires:	cmake
 BuildRequires:	python-devel
 BuildRequires:	freetype2-devel
 BuildRequires:	devil-devel
@@ -25,8 +24,9 @@ BuildRequires:	boost-devel >= 1.37.0
 BuildRequires:	ogre-devel >= 1.4.6
 BuildRequires:	gigi-devel
 BuildRequires:	bullet-devel
-BuildRequires:	cmake
-BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}
+
+Requires:   %{name}-data = %{version}
+Requires:   ogre
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
@@ -56,8 +56,6 @@ export CXXFLAGS="%optflags -DBOOST_FILESYSTEM_VERSION=2"
 %make
 
 %install
-rm -rf %{buildroot}
-
 install -d -m 755 %{buildroot}%{_gamesbindir}
 install -m 755 build/freeorion %{buildroot}%{_gamesbindir}/freeorion.real
 install -m 755 build/freeoriond %{buildroot}%{_gamesbindir}/freeoriond
@@ -99,19 +97,14 @@ perl -pi \
 #perl -pi -e '1d;2i#!/usr/bin/python' \
 #    % {buildroot} % {_gamesdatadir}/ % {name}/default/AI/AIstate.py
 
-%clean
-rm -rf %{buildroot}
-
 %files
-%defattr(-,root,root)
 %doc RELEASE-NOTES-V03.txt 
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
 %{_gamesdatadir}/freeorion/ogre_plugins.cfg
 %{_datadir}/applications/mandriva-freeorion.desktop
 
-
 %files data
-%defattr(-,root,root)
 %{_gamesdatadir}/freeorion
 %exclude %{_gamesdatadir}/freeorion/ogre_plugins.cfg
+
