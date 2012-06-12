@@ -1,11 +1,11 @@
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.3.16
-Release:	2
+Version:	0.4
+Release:	1
 License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
-Source0:	%{name}-%{version}.tar.gz
+Source0:	%{name}-%{version}.tar.xz
 Source1:	%{name}.png
 #Patch0:     freeorion-0.3.15-fix-link.patch
 #Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
@@ -44,7 +44,7 @@ License:	CC-BY-SA
 Data files for FreeOrion game
 
 %prep
-%setup -q -n trunk/FreeOrion
+%setup -qn FreeOrion
 # % patch0 -p 2
 # % patch1 -p 2
 # % patch2 -p 2
