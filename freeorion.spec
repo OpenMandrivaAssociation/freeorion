@@ -21,7 +21,7 @@ BuildRequires:	SDL-devel
 BuildRequires:	log4cpp-devel
 BuildRequires:	freealut-devel
 BuildRequires:	boost-devel >= 1.37.0
-BuildRequires:	ogre-devel >= 1.4.6
+BuildRequires:	ogre-devel >= 1.8.0
 BuildRequires:	gigi-devel
 BuildRequires:	bullet-devel
 
