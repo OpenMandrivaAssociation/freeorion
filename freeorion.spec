@@ -1,32 +1,29 @@
-Summary:	Turn-based space empire and galactic conquest
+%define oname FreeOrion
+%define pre 20120910
+
 Name:		freeorion
-Version:	0.4
-Release:	2
+Version:	0.4.2
+Release:	0.pre%{pre}.1
+Summary:	Turn-based space empire and galactic conquest
 License:	GPLv2
 Group:		Games/Strategy
 URL:		http://www.freeorion.org
-Source0:	%{name}-%{version}.tar.xz
+Source0:	%{oname}-%{version}_pre%{pre}.tar.bz2
 Source1:	%{name}.png
-#Patch0:     freeorion-0.3.15-fix-link.patch
-#Patch1:     freeorion-0.3.15-fix-ogre-configuration-location.patch
-#Patch2:     freeorion-0.3.15-force-data-location.patch
+Requires:	%{name}-data = %{version}
+Requires:	ogre
 BuildRequires:	cmake
-BuildRequires:	python-devel
-BuildRequires:	freetype2-devel
-BuildRequires:	devil-devel
-BuildRequires:	libvorbis-devel
-BuildRequires:	libogg-devel
-BuildRequires:	openal-devel
-BuildRequires:	SDL-devel
-BuildRequires:	log4cpp-devel
-BuildRequires:	freealut-devel
-BuildRequires:	boost-devel >= 1.37.0
-BuildRequires:	ogre-devel >= 1.8.0
-BuildRequires:	gigi-devel
-BuildRequires:	bullet-devel
-
-Requires:   %{name}-data = %{version}
-Requires:   ogre
+BuildRequires:	boost-devel
+BuildRequires:	pkgconfig(bullet)
+BuildRequires:	pkgconfig(freealut)
+BuildRequires:	pkgconfig(freetype2)
+BuildRequires:	pkgconfig(GiGi)
+BuildRequires:	pkgconfig(ogg)
+BuildRequires:	pkgconfig(OGRE)
+BuildRequires:	pkgconfig(openal)
+BuildRequires:	pkgconfig(python)
+BuildRequires:	pkgconfig(sdl)
+BuildRequires:	pkgconfig(vorbis)
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
@@ -44,16 +41,14 @@ License:	CC-BY-SA
 Data files for FreeOrion game
 
 %prep
-%setup -qn FreeOrion
-# % patch0 -p 2
-# % patch1 -p 2
-# % patch2 -p 2
+%setup -q -n %{oname}-%{version}_pre%{pre}
+sed -e "s:PluginFolder=.:PluginFolder=$(pkg-config --variable=plugindir OGRE):" -i ogre_plugins.cfg
 
 %build
-export CXXFLAGS="%optflags -DBOOST_FILESYSTEM_VERSION=2"
-%cmake \
-    -DCMAKE_MODULE_PATH=%{_datadir}/cmake/Modules/GG
-%make
+# System resource usage is extremely high so disable extra flags and parallel build
+%global optflags -O2
+%cmake -DBUILD_DEBUG:BOON=ON
+make VERBOSE=1
 
 %install
 install -d -m 755 %{buildroot}%{_gamesbindir}
@@ -89,16 +84,9 @@ Categories=Game;StrategyGame;
 EOF
 
 install -m 644 ogre_plugins.cfg %{buildroot}%{_gamesdatadir}/%{name}
-perl -pi \
-    -e 's|PluginFolder=.*|PluginFolder=%{_libdir}/OGRE|' \
-    %{buildroot}%{_gamesdatadir}/%{name}/ogre_plugins.cfg
-
-
-#perl -pi -e '1d;2i#!/usr/bin/python' \
-#    % {buildroot} % {_gamesdatadir}/ % {name}/default/AI/AIstate.py
 
 %files
-%doc RELEASE-NOTES-V03.txt 
+%doc changelog.txt
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
 %{_gamesdatadir}/freeorion/ogre_plugins.cfg
