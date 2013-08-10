@@ -1,35 +1,51 @@
-%define oname FreeOrion
-%define pre 20120910
+%define _enable_debug_packages %{nil}
+%define debug_package %{nil}
 
-Name:		freeorion
-Version:	0.4.2
-Release:	0.pre%{pre}.1
+%define oname FreeOrion
+
 Summary:	Turn-based space empire and galactic conquest
-License:	GPLv2
+Name:		freeorion
+Version:	0.4.3
+Release:	1
+License:	GPLv2+
 Group:		Games/Strategy
-URL:		http://www.freeorion.org
-Source0:	%{oname}-%{version}_pre%{pre}.tar.bz2
+Url:		http://www.freeorion.org
+# From SVN, rev 6318
+Source0:	%{oname}-%{version}.tar.bz2
 Source1:	%{name}.png
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 BuildRequires:	cmake
 BuildRequires:	boost-devel
+BuildRequires:	jpeg-devel
 BuildRequires:	pkgconfig(bullet)
 BuildRequires:	pkgconfig(freealut)
 BuildRequires:	pkgconfig(freetype2)
-BuildRequires:	pkgconfig(GiGi)
+BuildRequires:	pkgconfig(libpng)
+BuildRequires:	pkgconfig(libtiff-4)
 BuildRequires:	pkgconfig(ogg)
 BuildRequires:	pkgconfig(OGRE)
+BuildRequires:	pkgconfig(OIS)
 BuildRequires:	pkgconfig(openal)
 BuildRequires:	pkgconfig(python)
 BuildRequires:	pkgconfig(sdl)
 BuildRequires:	pkgconfig(vorbis)
+BuildRequires:	pkgconfig(zlib)
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
 (4X) computer game being designed and built by the FreeOrion project. FreeOrion
 is inspired by the tradition of the Master of Orion games, but is not a clone
 or remake of that series or any other game.
+
+%files
+%doc changelog.txt
+%{_iconsdir}/%{name}.png
+%{_gamesbindir}/freeorion*
+%{_gamesdatadir}/freeorion/ogre_plugins.cfg
+%{_datadir}/applications/mandriva-freeorion.desktop
+
+#----------------------------------------------------------------------------
 
 %package data
 Summary:	FreeOrion game data files
@@ -40,14 +56,25 @@ License:	CC-BY-SA
 %description data
 Data files for FreeOrion game
 
+%files data
+%{_gamesdatadir}/freeorion
+%exclude %{_gamesdatadir}/freeorion/ogre_plugins.cfg
+
+#----------------------------------------------------------------------------
+
 %prep
-%setup -q -n %{oname}-%{version}_pre%{pre}
-sed -e "s:PluginFolder=.:PluginFolder=$(pkg-config --variable=plugindir OGRE):" -i ogre_plugins.cfg
+%setup -q -n %{oname}-%{version}
+#patch0 -p1
+sed -e "s:PluginFolder=.*:PluginFolder=$(pkg-config --variable=plugindir OGRE):" -i ogre_plugins.cfg.in
 
 %build
 # System resource usage is extremely high so disable extra flags and parallel build
 %global optflags -O2
-%cmake -DBUILD_DEBUG:BOON=ON
+%cmake \
+	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+	-DBUILD_DEBUG:BOON=ON \
+	-DUSE_STATIC_LIBS:BOOL=ON \
+	-DBUILD_SHARED_LIBS:BOOL=OFF
 make VERBOSE=1
 
 %install
@@ -83,16 +110,5 @@ Terminal=false
 Categories=Game;StrategyGame;
 EOF
 
-install -m 644 ogre_plugins.cfg %{buildroot}%{_gamesdatadir}/%{name}
-
-%files
-%doc changelog.txt
-%{_iconsdir}/%{name}.png
-%{_gamesbindir}/freeorion*
-%{_gamesdatadir}/freeorion/ogre_plugins.cfg
-%{_datadir}/applications/mandriva-freeorion.desktop
-
-%files data
-%{_gamesdatadir}/freeorion
-%exclude %{_gamesdatadir}/freeorion/ogre_plugins.cfg
+install -m 644 ogre_plugins.cfg.in %{buildroot}%{_gamesdatadir}/%{name}/ogre_plugins.cfg
 
