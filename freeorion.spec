@@ -34,6 +34,7 @@ BuildRequires:	pkgconfig(vorbis)
 BuildRequires:	pkgconfig(zlib)
 BuildRequires:	pkgconfig(gl)
 BuildRequires:	pkgconfig(glu)
+BuildRequires:	pkgconfig(sdl2)
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
