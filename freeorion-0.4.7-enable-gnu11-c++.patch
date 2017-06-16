@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fd7f0c2..98e858a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,7 +28,7 @@ include(TargetDependencies)
+ set(FreeOrion_VERSION 0.4.7)
+ set(CMAKE_CXX_STANDARD 11)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CXX_EXTENSIONS OFF)
++set(CMAKE_CXX_EXTENSIONS ON)
+ 
+ option(BUILD_TESTING "Build the testing tree." OFF)
+ option(FO_LINK_STATIC_BOOST_LIBS "Link static boost libraries." ${APPLE})
+diff --git a/GG/CMakeLists.txt b/GG/CMakeLists.txt
+index 2ba4162..750c81d 100644
+--- a/GG/CMakeLists.txt
++++ b/GG/CMakeLists.txt
+@@ -46,7 +46,7 @@ include(Util)
+ set(GIGI_VERSION 0.8.0)
+ set(CMAKE_CXX_STANDARD 11)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CXX_EXTENSIONS OFF)
++set(CMAKE_CXX_EXTENSIONS ON)
+ 
+ option(BUILD_SHARED_LIBS "Build project as shared libraries." ON)
+ option(ENABLE_PNG_TEXTURES "Enable PNG texture support." ON)

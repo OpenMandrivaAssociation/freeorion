@@ -5,16 +5,17 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.3
-Release:	2
+Version:	0.4.7
+Release:	1
 License:	GPLv2+
 Group:		Games/Strategy
 Url:		http://www.freeorion.org
-# From SVN, rev 6318
-Source0:	%{oname}-%{version}.tar.bz2
+Source0:	https://github.com/freeorion/freeorion/archive/v%{version}.tar.gz
 Source1:	%{name}.png
 Requires:	%{name}-data = %{version}
 Requires:	ogre
+
+Patch0:		freeorion-0.4.7-enable-gnu11-c++.patch
 BuildRequires:	cmake
 BuildRequires:	boost-devel
 BuildRequires:	jpeg-devel
@@ -63,19 +64,20 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%setup -q -n %{oname}-%{version}
-#patch0 -p1
-sed -e "s:PluginFolder=.*:PluginFolder=$(pkg-config --variable=plugindir OGRE):" -i ogre_plugins.cfg.in
+%setup -q
+%apply_patches
 
 %build
+sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
 %global optflags -O2
+
 %cmake \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-	-DBUILD_DEBUG:BOON=ON \
-	-DUSE_STATIC_LIBS:BOOL=ON \
-	-DBUILD_SHARED_LIBS:BOOL=OFF
-make VERBOSE=1
+	-DPYTHON_EXECUTABLE=%{_bindir}/python2 \
+	-DRELEASE_COMPILE_FLAGS="%{optflags}"
+
+%make VERBOSE=1
 
 %install
 install -d -m 755 %{buildroot}%{_gamesbindir}
