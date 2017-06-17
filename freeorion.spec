@@ -34,6 +34,7 @@ BuildRequires:	pkgconfig(vorbis)
 BuildRequires:	pkgconfig(zlib)
 BuildRequires:	pkgconfig(gl)
 BuildRequires:	pkgconfig(glu)
+BuildRequires:	pkgconfig(glew)
 BuildRequires:	pkgconfig(sdl2)
 
 %description
