@@ -2,6 +2,7 @@
 %define debug_package %{nil}
 
 %define oname FreeOrion
+%define _disable_ld_no_undefined %nil
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
@@ -47,7 +48,6 @@ or remake of that series or any other game.
 %doc changelog.txt
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
-%{_gamesdatadir}/freeorion/ogre_plugins.cfg
 %{_datadir}/applications/mandriva-freeorion.desktop
 
 #----------------------------------------------------------------------------
@@ -75,6 +75,7 @@ Data files for FreeOrion game
 sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
 %global optflags -O2
+export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -115,6 +116,3 @@ Icon=%{name}
 Terminal=false
 Categories=Game;StrategyGame;
 EOF
-
-install -m 644 ogre_plugins.cfg.in %{buildroot}%{_gamesdatadir}/%{name}/ogre_plugins.cfg
-
