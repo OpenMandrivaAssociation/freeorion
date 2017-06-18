@@ -63,7 +63,6 @@ Data files for FreeOrion game
 
 %files data
 %{_gamesdatadir}/freeorion
-%exclude %{_gamesdatadir}/freeorion/ogre_plugins.cfg
 
 #----------------------------------------------------------------------------
 
