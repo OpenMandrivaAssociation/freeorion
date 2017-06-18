@@ -45,7 +45,6 @@ is inspired by the tradition of the Master of Orion games, but is not a clone
 or remake of that series or any other game.
 
 %files
-%doc changelog.txt
 %{_iconsdir}/%{name}.png
 %{_gamesbindir}/freeorion*
 %{_datadir}/applications/mandriva-freeorion.desktop
