@@ -6,7 +6,7 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.7
+Version:	0.4.7.1
 Release:	1
 License:	GPLv2+
 Group:		Games/Strategy
@@ -16,7 +16,6 @@ Source1:	%{name}.png
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
-Patch0:		freeorion-0.4.7-enable-gnu11-c++.patch
 BuildRequires:	cmake
 BuildRequires:	boost-devel
 BuildRequires:	jpeg-devel
