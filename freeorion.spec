@@ -14,6 +14,8 @@ Url:		http://www.freeorion.org
 #Source0:	https://github.com/freeorion/freeorion/archive/v%{version}.tar.gz
 Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/FreeOrion_v%{version}_2018-08-23.26f16b0_Source.tar.gz
 Source1:	%{name}.png
+# Upstream: https://github.com/freeorion/freeorion/pull/2310
+Patch0:		openmandriva-fix-build-with-boost1.69-remove-signals.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 Requires:       openal
@@ -72,7 +74,7 @@ Data files for FreeOrion game
 
 %prep
 %setup -q -n src-tarball
-%apply_patches
+%autopatch -p1
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
