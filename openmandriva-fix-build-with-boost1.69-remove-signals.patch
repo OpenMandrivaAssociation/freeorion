@@ -1,6 +1,6 @@
-diff -Naur /home/x/Pulpit/freeorion-0.4.8/CMakeLists.txt /home/x/Pulpit/freeorion-0.4.8/new-CMakeLists.txt
---- /home/x/Pulpit/freeorion-0.4.8/CMakeLists.txt       2018-08-23 11:41:14.000000000 +0200
-+++ /home/x/Pulpit/freeorion-0.4.8/new-CMakeLists.txt   2019-01-26 18:50:04.037104762 +0100
+diff -Naur freeorion-0.4.8/CMakeLists.txt freeorion-0.4.8/new-CMakeLists.txt
+--- freeorion-0.4.8/CMakeLists.txt       2018-08-23 11:41:14.000000000 +0200
++++ freeorion-0.4.8/new-CMakeLists.txt   2019-01-26 18:50:04.037104762 +0100
 @@ -205,7 +205,6 @@
          log_setup
          regex
@@ -35,9 +35,9 @@ diff -Naur /home/x/Pulpit/freeorion-0.4.8/CMakeLists.txt /home/x/Pulpit/freeorio
          boost_thread-vc90-mt-1_44.dll
          glew32.dll
 
-diff -Naur /home/x/Pulpit/freeorion-0.4.8/GG/CMakeLists.txt /home/x/Pulpit/freeorion-0.4.8/GG/new-CMakeLists.txt
---- /home/x/Pulpit/freeorion-0.4.8/GG/CMakeLists.txt    2018-08-23 11:41:14.000000000 +0200
-+++ /home/x/Pulpit/freeorion-0.4.8/GG/new-CMakeLists.txt        2019-01-26 18:50:49.007399545 +0100
+diff -Naur freeorion-0.4.8/GG/CMakeLists.txt freeorion-0.4.8/GG/new-CMakeLists.txt
+--- freeorion-0.4.8/GG/CMakeLists.txt    2018-08-23 11:41:14.000000000 +0200
++++ freeorion-0.4.8/GG/new-CMakeLists.txt        2019-01-26 18:50:49.007399545 +0100
 @@ -91,7 +91,7 @@
  endif()
  
