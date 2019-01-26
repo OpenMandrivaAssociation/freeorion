@@ -1,0 +1,49 @@
+diff -Naur /home/x/Pulpit/freeorion-0.4.8/CMakeLists.txt /home/x/Pulpit/freeorion-0.4.8/new-CMakeLists.txt
+--- /home/x/Pulpit/freeorion-0.4.8/CMakeLists.txt       2018-08-23 11:41:14.000000000 +0200
++++ /home/x/Pulpit/freeorion-0.4.8/new-CMakeLists.txt   2019-01-26 18:50:04.037104762 +0100
+@@ -205,7 +205,6 @@
+         log_setup
+         regex
+         serialization
+-        signals
+         system
+         thread
+     REQUIRED)
+@@ -357,7 +356,6 @@
+     ${Boost_LOG_SETUP_LIBRARY}
+     ${Boost_REGEX_LIBRARY}
+     ${Boost_SERIALIZATION_LIBRARY}
+-    ${Boost_SIGNALS_LIBRARY}
+     ${Boost_SYSTEM_LIBRARY}
+     ${Boost_THREAD_LIBRARY}
+     ${ZLIB_LIBRARIES}
+@@ -669,8 +667,6 @@
+         COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different "${Boost_SERIALIZATION_LIBRARY}" "$<TARGET_FILE_DIR:freeorion>/../SharedSupport"
+         COMMAND
+-           ${CMAKE_COMMAND} -E copy_if_different "${Boost_SIGNALS_LIBRARY}" "$<TARGET_FILE_DIR:freeorion>/../SharedSupport"
+-        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different "${Boost_SYSTEM_LIBRARY}" "$<TARGET_FILE_DIR:freeorion>/../SharedSupport"
+         COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different "${Boost_THREAD_LIBRARY}" "$<TARGET_FILE_DIR:freeorion>/../SharedSupport"
+@@ -769,7 +765,6 @@
+         boost_python-vc90-mt-1_44.dll
+         boost_regex-vc90-mt-1_44.dll
+         boost_serialization-vc90-mt-1_44.dll
+-        boost_signals-vc90-mt-1_44.dll
+         boost_system-vc90-mt-1_44.dll
+         boost_thread-vc90-mt-1_44.dll
+         glew32.dll
+
+diff -Naur /home/x/Pulpit/freeorion-0.4.8/GG/CMakeLists.txt /home/x/Pulpit/freeorion-0.4.8/GG/new-CMakeLists.txt
+--- /home/x/Pulpit/freeorion-0.4.8/GG/CMakeLists.txt    2018-08-23 11:41:14.000000000 +0200
++++ /home/x/Pulpit/freeorion-0.4.8/GG/new-CMakeLists.txt        2019-01-26 18:50:49.007399545 +0100
+@@ -91,7 +91,7 @@
+ endif()
+ 
+ set(Boost_USE_STATIC_LIBS ${USE_STATIC_LIBS})
+-find_package(Boost ${MINIMUM_BOOST_VERSION} COMPONENTS date_time filesystem regex signals system thread log REQUIRED)
++ind_package(Boost ${MINIMUM_BOOST_VERSION} COMPONENTS date_time filesystem regex system thread log REQUIRED)
+ 
+ find_package(OpenGL REQUIRED)
+ find_package(GLEW REQUIRED)
