@@ -20,8 +20,10 @@ Requires:       openal
 
 BuildRequires:	cmake
 BuildRequires:	boost-devel
-BuildRequires:	boost-signals-devel
+#BuildRequires:	boost-signals-devel
 BuildRequires:	boost-python-devel
+BuildRequires:	boost-core-devel
+BuildRequires:	boost-align-devel
 BuildRequires:	jpeg-devel
 BuildRequires:	pkgconfig(bullet)
 BuildRequires:	pkgconfig(freealut)
