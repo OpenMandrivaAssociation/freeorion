@@ -1,0 +1,16 @@
+diff -Naur freeorion-0.4.8/CMakeLists.txt freeorion-0.4.8/1new-CMakeLists.txt
+--- freeorion-0.4.8/CMakeLists.txt       2018-08-23 11:41:14.000000000 +0200
++++ freeorion-0.4.8/1new-CMakeLists.txt  2019-01-27 18:43:52.514266485 +0100
+@@ -209,12 +209,6 @@
+         system
+         thread
+     REQUIRED)
+-if(${Boost_VERSION} GREATER 106699) # boost >= 1.67
+-    find_package(Boost COMPONENTS python27 REQUIRED)
+-    set(Boost_PYTHON_LIBRARY ${Boost_PYTHON27_LIBRARY})
+-else()
+-    find_package(Boost COMPONENTS python REQUIRED)
+-endif()
+ 
+ find_package(ZLIB REQUIRED)
+ if(NOT BUILD_HEADLESS)
