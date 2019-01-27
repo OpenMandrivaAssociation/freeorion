@@ -28,6 +28,9 @@ BuildRequires:	boost-python-devel
 BuildRequires:	boost-core-devel
 BuildRequires:	boost-align-devel
 BuildRequires:	jpeg-devel
+BuildRequires:	cppcheck
+BuildRequires:	doxygen
+BuildRequires:	python-pycodestyle
 BuildRequires:	pkgconfig(bullet)
 BuildRequires:	pkgconfig(freealut)
 BuildRequires:	pkgconfig(freetype2)
@@ -45,6 +48,7 @@ BuildRequires:	pkgconfig(gl)
 BuildRequires:	pkgconfig(glu)
 BuildRequires:	pkgconfig(glew)
 BuildRequires:	pkgconfig(sdl2)
+
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
