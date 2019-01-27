@@ -16,7 +16,7 @@ Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/Fr
 Source1:	%{name}.png
 # Upstream: https://github.com/freeorion/freeorion/pull/2310
 Patch0:		openmandriva-fix-build-with-boost1.69-remove-signals.patch
-Patch1:		cmake_boost_python.patch
+#Patch1:		cmake_boost_python.patch
 Patch2:		insane-patch-remove-boost-python.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
