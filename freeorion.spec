@@ -66,7 +66,7 @@ Data files for FreeOrion game
 
 %prep
 %setup -q
-%apply_patches
+%autopatch -p1
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
