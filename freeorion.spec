@@ -6,12 +6,12 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.7.1
+Version:	0.4.9
 Release:	1
 License:	GPLv2+
 Group:		Games/Strategy
 Url:		http://www.freeorion.org
-Source0:	https://github.com/freeorion/freeorion/archive/v%{version}.tar.gz
+Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/FreeOrion_v0.4.9_2020-02-02.db53471_Source.tar.gz
 Source1:	%{name}.png
 Requires:	%{name}-data = %{version}
 Requires:	ogre
@@ -19,6 +19,7 @@ Requires:	ogre
 BuildRequires:	cmake
 BuildRequires:	boost-devel
 BuildRequires:	jpeg-devel
+BuildRequires:  pkgconfig(python2)
 BuildRequires:	pkgconfig(bullet)
 BuildRequires:	pkgconfig(freealut)
 BuildRequires:	pkgconfig(freetype2)
@@ -65,7 +66,7 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%setup -q
+%setup -qn src-tarball
 %autopatch -p1
 
 %build
