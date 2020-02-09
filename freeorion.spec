@@ -18,6 +18,7 @@ Requires:	ogre
 
 BuildRequires:	cmake
 BuildRequires:	boost-devel
+Buildrequires:  boost-python2-devel
 BuildRequires:	jpeg-devel
 BuildRequires:  pkgconfig(python2)
 BuildRequires:	pkgconfig(bullet)
