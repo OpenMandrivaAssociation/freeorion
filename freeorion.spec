@@ -79,7 +79,7 @@ export LDFLAGS="%{ldflags} -Wl,--as-needed"
 %cmake \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 	-DPYTHON_EXECUTABLE=%{_bindir}/python2 \
-	-DRELEASE_COMPILE_FLAGS="%{optflags}"
+	-DRELEASE_COMPILE_FLAGS="%{optflags}" \
 	-DBUILD_SHARED_LIBS=OFF
 
 %make VERBOSE=1
