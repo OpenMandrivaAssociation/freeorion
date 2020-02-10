@@ -89,6 +89,7 @@ install -d -m 755 %{buildroot}%{_gamesbindir}
 install -m 755 build/freeorion %{buildroot}%{_gamesbindir}/freeorion.real
 install -m 755 build/freeoriond %{buildroot}%{_gamesbindir}/freeoriond
 install -m 755 build/freeorionca %{buildroot}%{_gamesbindir}/freeorionca
+install -m755 build/*.so %{buildroot}%{_libdir}/%{name}
 
 cat > %{buildroot}%{_gamesbindir}/freeorion <<EOF
 #!/bin/sh
