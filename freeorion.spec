@@ -77,7 +77,6 @@ sed -e "s/-O3//" -i CMakeLists.txt
 export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
-#	-DCMAKE_INSTALL_LIBDIR=%{_lib} \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 	-DPYTHON_EXECUTABLE=%{_bindir}/python2 \
 	-DRELEASE_COMPILE_FLAGS="%{optflags}"
