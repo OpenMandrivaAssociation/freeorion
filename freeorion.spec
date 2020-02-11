@@ -13,6 +13,7 @@ Group:		Games/Strategy
 Url:		http://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/FreeOrion_v0.4.9_2020-02-02.db53471_Source.tar.gz
 Source1:	%{name}.png
+Patch0:		freeorion-static-helper-libs.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
@@ -67,13 +68,13 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%setup -qn src-tarball
-%autopatch -p1
+%autosetup -p1 -n src-tarball
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
-%global optflags -O2
+#global optflags -O2
+# (but the build boxes can handle it...)
 export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
