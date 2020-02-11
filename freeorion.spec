@@ -80,7 +80,8 @@ export LDFLAGS="%{ldflags} -Wl,--as-needed"
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 	-DPYTHON_EXECUTABLE=%{_bindir}/python2 \
 	-DRELEASE_COMPILE_FLAGS="%{optflags}" \
-	-DBUILD_SHARED_LIBS=OFF
+	-DBUILD_SHARED_LIBS=OFF \
+	-DOpenGL_GL_PREFERENCE=GLVND
 
 %make VERBOSE=1
 
