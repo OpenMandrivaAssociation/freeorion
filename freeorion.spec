@@ -71,9 +71,7 @@ Data files for FreeOrion game
 %autopatch -p1
 
 %build
-sed -e "s/-O3//" -i CMakeLists.txt
-# System resource usage is extremely high so disable extra flags and parallel build
-%global optflags -O2
+%global optflags -O3
 export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
@@ -83,7 +81,7 @@ export LDFLAGS="%{ldflags} -Wl,--as-needed"
 	-DBUILD_SHARED_LIBS=OFF \
 	-DOpenGL_GL_PREFERENCE=GLVND
 
-%make VERBOSE=1
+%make_build
 
 %install
 install -d -m 755 %{buildroot}%{_gamesbindir}
