@@ -1,0 +1,55 @@
+diff -up src-tarball/CMakeLists.txt.omv~ src-tarball/CMakeLists.txt
+--- src-tarball/CMakeLists.txt.omv~	2020-02-10 23:26:37.715005496 +0100
++++ src-tarball/CMakeLists.txt	2020-02-10 23:28:01.520000008 +0100
+@@ -358,14 +358,9 @@ if(Apple)
+     )
+ endif()
+ 
+-if(NOT WIN32)
+-    add_library(freeorioncommon "")
+-endif()
+-
++add_library(freeorioncommon STATIC "")
+ 
+ if(WIN32)
+-    add_library(freeorioncommon STATIC "")
+-
+     set_property(TARGET freeorioncommon
+         PROPERTY
+         OUTPUT_NAME Common
+@@ -468,13 +463,9 @@ target_compile_definitions(freeorionpars
+         -DFREEORION_BUILD_PARSE
+ )
+ 
+-if(NOT WIN32)
+-    add_library(freeorionparse $<TARGET_OBJECTS:freeorionparseobj>)
+-endif()
++add_library(freeorionparse STATIC $<TARGET_OBJECTS:freeorionparseobj>)
+ 
+ if(WIN32)
+-    add_library(freeorionparse STATIC $<TARGET_OBJECTS:freeorionparseobj>)
+-
+     set_property(TARGET freeorionparse
+         PROPERTY
+         OUTPUT_NAME Parsers
+diff -up src-tarball/GG/CMakeLists.txt.omv~ src-tarball/GG/CMakeLists.txt
+--- src-tarball/GG/CMakeLists.txt.omv~	2020-02-10 15:34:50.970859068 +0100
++++ src-tarball/GG/CMakeLists.txt	2020-02-10 15:35:51.559855101 +0100
+@@ -136,7 +136,7 @@ configure_file(
+ ## Define main project targets.
+ ##
+ 
+-add_library(GiGi "")
++add_library(GiGi STATIC "")
+ 
+ if(USE_STATIC_LIBS)
+     set_target_properties(GiGi
+@@ -182,7 +182,7 @@ if(TIFF_FOUND)
+ endif()
+ 
+ 
+-add_library(GiGiSDL "")
++add_library(GiGiSDL STATIC "")
+ 
+ if(USE_STATIC_LIBS)
+     set_target_properties(GiGiSDL

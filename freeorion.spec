@@ -13,6 +13,7 @@ Group:		Games/Strategy
 Url:		http://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/FreeOrion_v0.4.9_2020-02-02.db53471_Source.tar.gz
 Source1:	%{name}.png
+Patch0:		freeorion-static-helper-libs.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
@@ -67,8 +68,7 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%setup -qn src-tarball
-%autopatch -p1
+%autosetup -p1 -n src-tarball
 
 %build
 %global optflags -O3
