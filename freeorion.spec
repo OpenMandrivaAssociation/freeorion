@@ -6,22 +6,23 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.9
-Release:	2
+Version:	0.4.10
+Release:	1
 License:	GPLv2+
 Group:		Games/Strategy
 Url:		http://www.freeorion.org
-Source0:	https://github.com/freeorion/freeorion/releases/download/v%{version}/FreeOrion_v0.4.9_2020-02-02.db53471_Source.tar.gz
+Source0:	https://github.com/freeorion/freeorion/archive/v%{version}.tar.gz
 Source1:	%{name}.png
-Patch0:		freeorion-static-helper-libs.patch
+# https://github.com/freeorion/freeorion/pull/3123
+Patch0:		3123.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
 BuildRequires:	cmake
 BuildRequires:	boost-devel
-BuildRequires:  boost-python2-devel
+BuildRequires:  boost-python-devel
 BuildRequires:	jpeg-devel
-BuildRequires:  pkgconfig(python2)
+BuildRequires:  pkgconfig(python3)
 BuildRequires:	pkgconfig(bullet)
 BuildRequires:	pkgconfig(freealut)
 BuildRequires:	pkgconfig(freetype2)
@@ -68,7 +69,7 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%autosetup -p1 -n src-tarball
+%autosetup -p1
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
@@ -79,11 +80,11 @@ export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-	-DPYTHON_EXECUTABLE=%{_bindir}/python2 \
+	-DPYTHON_EXECUTABLE=%{_bindir}/python \
 	-DRELEASE_COMPILE_FLAGS="%{optflags}" \
 	-DBUILD_SHARED_LIBS=OFF
 
-%make VERBOSE=1
+%make_build VERBOSE=1
 
 %install
 install -d -m 755 %{buildroot}%{_gamesbindir}
