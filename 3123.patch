@@ -1,11 +1,12 @@
-From 197dfd9cff90b6a2e53efd2f52042aadc852b417 Mon Sep 17 00:00:00 2001
+From 84ebef3844bb2fb00ff0159613097f9af1740904 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 26 Jul 2020 23:49:34 +0200
 Subject: [PATCH] Fixes errors with boost::placeholders::_1 and _2 and _3
 
 ---
- UI/FleetWnd.cpp | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
+ UI/FleetWnd.cpp      | 10 +++++++---
+ UI/ObjectListWnd.cpp |  2 ++
+ 2 files changed, 9 insertions(+), 3 deletions(-)
 
 diff --git a/UI/FleetWnd.cpp b/UI/FleetWnd.cpp
 index c930992585..8d5542f67e 100644
@@ -38,3 +39,16 @@ index c930992585..8d5542f67e 100644
      // create drop target
      m_new_fleet_drop_target = GG::Wnd::Create<FleetDataPanel>(GG::X1, ListRowHeight(), m_system_id, true);
      AttachChild(m_new_fleet_drop_target);
+diff --git a/UI/ObjectListWnd.cpp b/UI/ObjectListWnd.cpp
+index d2810548f9..f21479aba0 100644
+--- a/UI/ObjectListWnd.cpp
++++ b/UI/ObjectListWnd.cpp
+@@ -1902,6 +1902,8 @@ class ObjectListBox : public CUIListBox {
+         m_header_row = GG::Wnd::Create<ObjectHeaderRow>(GG::X1, ListRowHeight());
+         SetColHeaders(m_header_row); // Gives ownership
+ 
++        using boost::placeholders::_1;
++
+         m_header_row->ColumnsChangedSignal.connect(
+             boost::bind(&ObjectListBox::Refresh, this));
+         m_header_row->ColumnHeaderLeftClickSignal.connect(
