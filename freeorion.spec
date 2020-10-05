@@ -14,7 +14,7 @@ Url:		http://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}/%{name}-%{version}.tar.gz
 Source1:	%{name}.png
 # https://github.com/freeorion/freeorion/pull/3123
-Patch0:		3123.patch
+#Patch0:		3123.patch
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
