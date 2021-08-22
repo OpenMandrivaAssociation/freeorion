@@ -1,5 +1,6 @@
-%define _enable_debug_packages %{nil}
-%define debug_package %{nil}
+#define _enable_debug_packages %{nil}
+#define debug_package %{nil}
+%define _empty_manifest_terminate_build 0
 
 %define oname FreeOrion
 %define _disable_ld_no_undefined %nil
@@ -7,7 +8,7 @@
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
 Version:	0.4.10.2
-Release:	3
+Release:	1
 License:	GPLv2+
 Group:		Games/Strategy
 Url:		http://www.freeorion.org
