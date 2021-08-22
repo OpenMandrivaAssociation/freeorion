@@ -6,7 +6,7 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.10.1
+Version:	0.4.10.2
 Release:	3
 License:	GPLv2+
 Group:		Games/Strategy
