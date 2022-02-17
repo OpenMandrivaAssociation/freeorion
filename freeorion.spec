@@ -79,6 +79,7 @@ sed -e "s/-O3//" -i CMakeLists.txt
 export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
 %cmake \
+	-DOpenGL_GL_PREFERENCE=LEGACY \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 	-DPYTHON_EXECUTABLE=%{_bindir}/python \
 	-DRELEASE_COMPILE_FLAGS="%{optflags}" \
