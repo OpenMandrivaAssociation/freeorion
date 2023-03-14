@@ -43,6 +43,7 @@ BuildRequires:	pkgconfig(gl)
 BuildRequires:	pkgconfig(glu)
 BuildRequires:	pkgconfig(glew)
 BuildRequires:	pkgconfig(sdl2)
+BuildRequires:	pkgconfig(libunwind-llvm)
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
