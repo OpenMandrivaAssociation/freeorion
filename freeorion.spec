@@ -72,7 +72,7 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%autosetup %{name}-%{version}-rc2 -p1
+%autosetup -n %{name}-%{version}-rc2 -p1
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
