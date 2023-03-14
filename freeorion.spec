@@ -76,6 +76,8 @@ Data files for FreeOrion game
 %autosetup -n %{name}-%{version}-rc2 -p1
 
 %build
+export CC=gcc
+export CXX=g++
 sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
 #global optflags -O2
