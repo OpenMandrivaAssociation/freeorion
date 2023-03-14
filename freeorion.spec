@@ -17,6 +17,7 @@ Group:		Games/Strategy
 Url:		http://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}-rc2/%{name}-%{version}-rc2.tar.gz
 Source1:	%{name}.png
+Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/4443.patch
 
 Requires:	%{name}-data = %{version}
 Requires:	ogre
@@ -76,8 +77,6 @@ Data files for FreeOrion game
 %autosetup -n %{name}-%{version}-rc2 -p1
 
 %build
-export CC=gcc
-export CXX=g++
 sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
 #global optflags -O2
