@@ -10,13 +10,14 @@
 
 Summary:	Turn-based space empire and galactic conquest
 Name:		freeorion
-Version:	0.4.10.2
-Release:	5
+Version:	0.5
+Release:	0.rc2.0
 License:	GPLv2+
 Group:		Games/Strategy
 Url:		http://www.freeorion.org
-Source0:	https://github.com/freeorion/freeorion/archive/v%{version}/%{name}-%{version}.tar.gz
+Source0:	https://github.com/freeorion/freeorion/archive/v%{version}-rc2/%{name}-%{version}-rc2.tar.gz
 Source1:	%{name}.png
+Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/4443.patch
 
 Requires:	%{name}-data = %{version}
 Requires:	ogre
@@ -43,6 +44,7 @@ BuildRequires:	pkgconfig(gl)
 BuildRequires:	pkgconfig(glu)
 BuildRequires:	pkgconfig(glew)
 BuildRequires:	pkgconfig(sdl2)
+BuildRequires:	pkgconfig(libunwind-llvm)
 
 %description
 FreeOrion is a free, open source, turn-based space empire and galactic conquest
@@ -72,7 +74,7 @@ Data files for FreeOrion game
 #----------------------------------------------------------------------------
 
 %prep
-%autosetup -p1
+%autosetup -n %{name}-%{version}-rc2 -p1
 
 %build
 sed -e "s/-O3//" -i CMakeLists.txt
