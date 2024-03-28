@@ -17,6 +17,8 @@ Group:		Games/Strategy
 Url:		https://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}-rc2/%{name}-%{version}.tar.gz
 Source1:	%{name}.png
+# Fix build with boost 1.85.0
+Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/4898.patch
 
 Requires:	%{name}-data = %{version}
 Requires:	ogre
