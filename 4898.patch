@@ -1,0 +1,22 @@
+From 4a3d4a6f8abc7453c4947a89ae64a7b847247041 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Tue, 26 Mar 2024 11:17:01 +0100
+Subject: [PATCH] remove seemingly unneeded #include that is removed from Boost
+ 1.85
+
+---
+ util/Directories.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/util/Directories.cpp b/util/Directories.cpp
+index 763b94000bf..6e1c9b1e844 100644
+--- a/util/Directories.cpp
++++ b/util/Directories.cpp
+@@ -4,7 +4,6 @@
+ #include "i18n.h"
+ 
+ #include <boost/algorithm/string/trim.hpp>
+-#include <boost/filesystem/convenience.hpp>
+ #include <boost/filesystem/operations.hpp>
+ #include <boost/date_time/posix_time/posix_time.hpp>
+ 
