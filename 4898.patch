@@ -1,15 +1,15 @@
-From 4a3d4a6f8abc7453c4947a89ae64a7b847247041 Mon Sep 17 00:00:00 2001
+From d3c9e7cd4b52125563f50eb58aa7fbb8a4442e69 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
-Date: Tue, 26 Mar 2024 11:17:01 +0100
-Subject: [PATCH] remove seemingly unneeded #include that is removed from Boost
- 1.85
+Date: Tue, 26 Mar 2024 16:59:48 +0100
+Subject: [PATCH 1/6] remove seemingly unneeded #include that is removed from
+ Boost 1.85
 
 ---
  util/Directories.cpp | 1 -
  1 file changed, 1 deletion(-)
 
 diff --git a/util/Directories.cpp b/util/Directories.cpp
-index 763b94000bf..6e1c9b1e844 100644
+index a92c08d95e6..07b69a9f7dd 100644
 --- a/util/Directories.cpp
 +++ b/util/Directories.cpp
 @@ -4,7 +4,6 @@
@@ -19,4 +19,153 @@ index 763b94000bf..6e1c9b1e844 100644
 -#include <boost/filesystem/convenience.hpp>
  #include <boost/filesystem/operations.hpp>
  #include <boost/date_time/posix_time/posix_time.hpp>
+ 
+
+From 46168e6f45f20ebae0d33a569ba1e47f823615d0 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Fri, 1 Sep 2023 15:26:02 +0200
+Subject: [PATCH 2/6] quiet deprecation warnings
+
+---
+ GG/src/dialogs/FileDlg.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/GG/src/dialogs/FileDlg.cpp b/GG/src/dialogs/FileDlg.cpp
+index fd24c587ed6..f6d39c5803d 100644
+--- a/GG/src/dialogs/FileDlg.cpp
++++ b/GG/src/dialogs/FileDlg.cpp
+@@ -215,7 +215,7 @@ void FileDlg::CompleteConstruction()
+ 
+     if (!m_init_filename.empty()) {
+         fs::path filename_path = fs::system_complete(fs::path(m_init_filename));
+-        m_files_edit->SetText(filename_path.leaf().string());
++        m_files_edit->SetText(filename_path.filename().string());
+     }
+ }
+ 
+@@ -548,7 +548,7 @@ void FileDlg::UpdateList()
+     if (!m_in_win32_drive_selection) {
+         // parent directory selector
+         if ((s_working_dir.string() != s_working_dir.root_path().string() &&
+-             !s_working_dir.branch_path().string().empty()) ||
++             !s_working_dir.parent_path().string().empty()) ||
+             Win32Paths())
+         {
+             auto row = Wnd::Create<ListBox::Row>();
+@@ -694,10 +694,10 @@ void FileDlg::OpenDirectory()
+     } else if (directory == "..") {
+         // move to parent directory of current directory
+         if (s_working_dir.string() != s_working_dir.root_path().string() &&
+-            !s_working_dir.branch_path().string().empty())
++            !s_working_dir.parent_path().string().empty())
+         {
+             // move to new directory
+-            SetWorkingDirectory(s_working_dir.branch_path());
++            SetWorkingDirectory(s_working_dir.parent_path());
+ 
+         } else {
+             // switch to drive selection mode
+
+From e3793ae372482d4eb5622e4ecbfe2cda16829aeb Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Thu, 28 Mar 2024 23:12:11 +0100
+Subject: [PATCH 3/6] tweak #include
+
+---
+ GG/src/dialogs/FileDlg.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/GG/src/dialogs/FileDlg.cpp b/GG/src/dialogs/FileDlg.cpp
+index f6d39c5803d..603437e14bc 100644
+--- a/GG/src/dialogs/FileDlg.cpp
++++ b/GG/src/dialogs/FileDlg.cpp
+@@ -9,7 +9,7 @@
+ 
+ #include <boost/cast.hpp>
+ #include <boost/algorithm/string/predicate.hpp>
+-#include <boost/filesystem/operations.hpp>
++#include <boost/filesystem.hpp>
+ #include <boost/format.hpp>
+ // boost::spirit::classic pulls in windows.h which in turn defines macro
+ // versions of min and max.  Defining NOMINMAX disables the creation of those
+
+From 60e66248f65c8d4bf3b9e4070d25b84e1cc5fbe2 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sun, 31 Mar 2024 12:02:06 +0200
+Subject: [PATCH 4/6] tweak #include
+
+---
+ util/Directories.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/util/Directories.cpp b/util/Directories.cpp
+index 07b69a9f7dd..62aa426987a 100644
+--- a/util/Directories.cpp
++++ b/util/Directories.cpp
+@@ -4,8 +4,8 @@
+ #include "i18n.h"
+ 
+ #include <boost/algorithm/string/trim.hpp>
+-#include <boost/filesystem/operations.hpp>
+ #include <boost/date_time/posix_time/posix_time.hpp>
++#include <boost/filesystem.hpp>
+ 
+ #include <cstdlib>
+ #include <mutex>
+
+From d5df27a9d96f35e8c5caed20d5fd56423c575006 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sun, 31 Mar 2024 12:44:18 +0200
+Subject: [PATCH 5/6] replaced deprecated boost::filesystem::branch_path with
+ parent_path
+
+---
+ util/Directories.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/util/Directories.cpp b/util/Directories.cpp
+index 62aa426987a..b8830b5348c 100644
+--- a/util/Directories.cpp
++++ b/util/Directories.cpp
+@@ -265,7 +265,7 @@ void InitBinDir(std::string const& argv0)
+ #if defined(FREEORION_WIN32)
+     try {
+         fs::path binary_file = fs::system_complete(FilenameToPath(argv0));
+-        bin_dir = binary_file.branch_path();
++        bin_dir = binary_file.parent_path();
+     } catch (const fs::filesystem_error &) {
+         bin_dir = fs::initial_path();
+     }
+@@ -314,7 +314,7 @@ void InitBinDir(std::string const& argv0)
+             std::string path_text(buf);
+ 
+             fs::path binary_file = fs::system_complete(fs::path(path_text));
+-            bin_dir = binary_file.branch_path();
++            bin_dir = binary_file.parent_path();
+ 
+             // check that a "freeoriond" file (hopefully the freeorion server binary) exists in the found directory
+             fs::path p(bin_dir);
+
+From 118b7b934de5b0bbcea91712e4dc3273e994f0bc Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sun, 31 Mar 2024 15:05:09 +0200
+Subject: [PATCH 6/6] tweak #include
+
+---
+ util/OptionsDB.cpp | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/util/OptionsDB.cpp b/util/OptionsDB.cpp
+index 66b2f6033f5..5bb42974022 100644
+--- a/util/OptionsDB.cpp
++++ b/util/OptionsDB.cpp
+@@ -14,8 +14,7 @@
+ #include <boost/algorithm/string/classification.hpp>
+ #include <boost/algorithm/string/erase.hpp>
+ #include <boost/algorithm/string/predicate.hpp>
+-#include <boost/filesystem/fstream.hpp>
+-#include <boost/filesystem/operations.hpp>
++#include <boost/filesystem.hpp>
+ #include <boost/range/algorithm_ext/erase.hpp>
+ #include <boost/tokenizer.hpp>
  
