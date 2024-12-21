@@ -1,7 +1,7 @@
-From 3857349191177e56d27628f866789eb39cd8e270 Mon Sep 17 00:00:00 2001
+From ca4739e06ed6716d55c67bedb46af2dfe92ae2d6 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Fri, 13 Dec 2024 17:38:09 +0100
-Subject: [PATCH] -replace use of query object when resolving ip addresses
+Subject: [PATCH 1/4] -replace use of query object when resolving ip addresses
  -grooming -should fix compile errors with Boost >= 1.87
 
 ---
@@ -330,3 +330,146 @@ index 1bc598e92cd..116821c3ee0 100644
  }
  
  
+
+From 937a934606cf5abd84da761b31610f6e3684e24f Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 00:35:16 +0100
+Subject: [PATCH 2/4] replace deprecated functions
+
+---
+ client/ClientNetworking.cpp | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/client/ClientNetworking.cpp b/client/ClientNetworking.cpp
+index 116821c3ee0..c36bda80095 100644
+--- a/client/ClientNetworking.cpp
++++ b/client/ClientNetworking.cpp
+@@ -90,10 +90,10 @@ namespace {
+                 m_timer.expires_after(std::chrono::seconds(2));
+                 m_timer.async_wait(boost::bind(&ServerDiscoverer::CloseSocket, this));
+                 m_io_context->run();
+-                m_io_context->reset();
++                m_io_context->restart();
+                 if (m_receive_successful) {
+                     auto address = (m_server_name == "localhost") ?
+-                        address::from_string("127.0.0.1") : m_sender_endpoint.address();
++                        make_address("127.0.0.1") : m_sender_endpoint.address();
+                     m_servers.emplace_back(address, m_server_name);
+                 }
+                 m_receive_successful = false;
+@@ -377,13 +377,13 @@ bool ClientNetworking::Impl::ConnectToServer(const ClientNetworking* const self,
+     TraceLogger(network) << "ClientNetworking::Impl::ConnectToServer() - Resolved.";
+     // configure the deadline timer to close socket and cancel connection attempts at timeout
+     m_deadline_has_expired = false;
+-    m_deadline_timer.expires_from_now(timeout);
++    m_deadline_timer.expires_after(timeout);
+     m_deadline_timer.async_wait([this](const auto& err) { HandleDeadlineTimeout(err); });
+ 
+     try {
+         TraceLogger(network) << "ClientNetworking::Impl::ConnectToServer() - Starting asio event loop";
+         m_io_context.run(); // blocks until connection or timeout
+-        m_io_context.reset();
++        m_io_context.restart();
+ 
+         if (IsConnected()) {
+             const auto connection_time = Clock::now() - start_time;
+@@ -438,7 +438,7 @@ void ClientNetworking::Impl::DisconnectFromServer() {
+     }
+ 
+     if (is_open)
+-        m_io_context.post(boost::bind(&ClientNetworking::Impl::DisconnectFromServerImpl, this));
++        boost::asio::post(m_io_context, boost::bind(&ClientNetworking::Impl::DisconnectFromServerImpl, this));
+ }
+ 
+ void ClientNetworking::Impl::SetPlayerID(int player_id) {
+@@ -452,7 +452,7 @@ void ClientNetworking::Impl::SendMessage(Message&& message) {
+         return;
+     }
+     TraceLogger(network) << "ClientNetworking::SendMessage() : sending message " << message;
+-    m_io_context.post(boost::bind(&ClientNetworking::Impl::SendMessageImpl, this, std::move(message)));
++    boost::asio::post(m_io_context, boost::bind(&ClientNetworking::Impl::SendMessageImpl, this, std::move(message)));
+ }
+ 
+ void ClientNetworking::Impl::SendSelfMessage(Message&& message) {
+@@ -510,7 +510,7 @@ void ClientNetworking::Impl::HandleConnection(const boost::system::error_code& e
+                 m_socket.async_connect(*endpoint_it, handle_connection);
+             };
+ 
+-            m_reconnect_timer.expires_from_now(std::chrono::milliseconds(100));
++            m_reconnect_timer.expires_after(std::chrono::milliseconds(100));
+             m_reconnect_timer.async_wait(handle_connection_deadlined);
+ 
+         } else {
+@@ -601,7 +601,7 @@ void ClientNetworking::Impl::NetworkingThread(const std::shared_ptr<const Client
+     }
+     decltype(m_outgoing_messages) empty_queue;
+     m_outgoing_messages.swap(empty_queue); // clear queue
+-    m_io_context.reset();
++    m_io_context.restart();
+     { // Mutex scope
+         std::scoped_lock lock(m_mutex);
+         m_rx_connected = false;
+
+From 5aae6c60f660b4f46929429d2dc490ba9ae23197 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 11:35:27 +0100
+Subject: [PATCH 3/4] -don't return empty list of servers when not connected
+ -use IP as server name if the server name is empty
+
+---
+ client/ClientNetworking.cpp | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/client/ClientNetworking.cpp b/client/ClientNetworking.cpp
+index c36bda80095..ff87da6b32b 100644
+--- a/client/ClientNetworking.cpp
++++ b/client/ClientNetworking.cpp
+@@ -317,13 +317,11 @@ bool ClientNetworking::Impl::HasAuthRole(Networking::RoleType role) const
+ { return m_roles.HasRole(role); }
+ 
+ ClientNetworking::ServerNames ClientNetworking::Impl::DiscoverLANServerNames() {
+-    if (!IsConnected())
+-        return ServerNames();
+     ServerDiscoverer discoverer(m_io_context);
+     discoverer.DiscoverServers();
+     ServerNames names;
+-    for (const auto& server : discoverer.Servers())
+-        names.push_back(server.second);
++    for (const auto& [server_address, server_name] : discoverer.Servers())
++        names.push_back(server_name.empty() ? server_address.to_string() : server_name);
+     return names;
+ }
+ 
+
+From 5b8b885417d6ae6c527c4512ab017b77497dc1b5 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 11:36:31 +0100
+Subject: [PATCH 4/4] move strings instead of making copies
+
+---
+ UI/ServerConnectWnd.cpp | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/UI/ServerConnectWnd.cpp b/UI/ServerConnectWnd.cpp
+index 4dc465e34c7..2dbae4fbc1c 100644
+--- a/UI/ServerConnectWnd.cpp
++++ b/UI/ServerConnectWnd.cpp
+@@ -197,11 +197,13 @@ namespace {
+ 
+ void ServerConnectWnd::PopulateServerList() {
+     m_servers_lb->Clear();
+-    const auto server_names = GGHumanClientApp::GetApp()->Networking().DiscoverLANServerNames();
+-    for (const auto& server : server_names) {
+-        auto row = GG::Wnd::Create<GG::ListBox::Row>();
+-        row->push_back(GG::Wnd::Create<CUILabel>(server));
+-        m_servers_lb->Insert(row);
++    {
++        auto server_names = GGHumanClientApp::GetApp()->Networking().DiscoverLANServerNames();
++        for (const auto& server_name : server_names) {
++            auto row = GG::Wnd::Create<GG::ListBox::Row>();
++            row->push_back(GG::Wnd::Create<CUILabel>(std::move(server_name)));
++            m_servers_lb->Insert(row);
++        }
+     }
+     // make local copies of server name options, since code below will possibly add more options.
+     // that could invalidate any views into names of existing options.
