@@ -1,7 +1,7 @@
 From ca4739e06ed6716d55c67bedb46af2dfe92ae2d6 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Fri, 13 Dec 2024 17:38:09 +0100
-Subject: [PATCH 1/4] -replace use of query object when resolving ip addresses
+Subject: [PATCH 1/5] -replace use of query object when resolving ip addresses
  -grooming -should fix compile errors with Boost >= 1.87
 
 ---
@@ -334,7 +334,7 @@ index 1bc598e92cd..116821c3ee0 100644
 From 937a934606cf5abd84da761b31610f6e3684e24f Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sat, 21 Dec 2024 00:35:16 +0100
-Subject: [PATCH 2/4] replace deprecated functions
+Subject: [PATCH 2/5] replace deprecated functions
 
 ---
  client/ClientNetworking.cpp | 16 ++++++++--------
@@ -410,10 +410,34 @@ index 116821c3ee0..c36bda80095 100644
          std::scoped_lock lock(m_mutex);
          m_rx_connected = false;
 
-From 5aae6c60f660b4f46929429d2dc490ba9ae23197 Mon Sep 17 00:00:00 2001
+From e376120c24b4cb10ddf978f32174b85cc8d2392f Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 15:49:21 +0100
+Subject: [PATCH 3/5] more deprecated function replacement
+
+---
+ server/ServerNetworking.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/server/ServerNetworking.cpp b/server/ServerNetworking.cpp
+index 019d8b3d03e..a20bbdf9898 100644
+--- a/server/ServerNetworking.cpp
++++ b/server/ServerNetworking.cpp
+@@ -215,7 +215,8 @@ void PlayerConnection::SendMessage(const Message& message, int empire_id, int tu
+         MessageSentSignal(false, empire_id, turn);
+         return;
+     }
+-    m_service.post(boost::bind(&PlayerConnection::SendMessageImpl, shared_from_this(), message, empire_id, turn));
++    boost::asio::post(m_service, boost::bind(&PlayerConnection::SendMessageImpl, shared_from_this(),
++                                             message, empire_id, turn));
+ }
+ 
+ bool PlayerConnection::IsEstablished() const noexcept {
+
+From 84ab1b2e64e9f1a639d388b272b9ff9a6181ef80 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sat, 21 Dec 2024 11:35:27 +0100
-Subject: [PATCH 3/4] -don't return empty list of servers when not connected
+Subject: [PATCH 4/5] -don't return empty list of servers when not connected
  -use IP as server name if the server name is empty
 
 ---
@@ -441,10 +465,10 @@ index c36bda80095..ff87da6b32b 100644
  }
  
 
-From 5b8b885417d6ae6c527c4512ab017b77497dc1b5 Mon Sep 17 00:00:00 2001
+From 05ced30ee8ecd3f59d703670bbd67af1fcfae4a1 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sat, 21 Dec 2024 11:36:31 +0100
-Subject: [PATCH 4/4] move strings instead of making copies
+Subject: [PATCH 5/5] move strings instead of making copies
 
 ---
  UI/ServerConnectWnd.cpp | 12 +++++++-----
