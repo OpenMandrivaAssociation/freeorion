@@ -1,64 +1,499 @@
-From 31b66cdb9510940dd555fe66bfc4a58edbdd6572 Mon Sep 17 00:00:00 2001
+From ca4739e06ed6716d55c67bedb46af2dfe92ae2d6 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
-Date: Sat, 21 Dec 2024 21:58:50 +0100
-Subject: [PATCH] add Font text parsing tests
+Date: Fri, 13 Dec 2024 17:38:09 +0100
+Subject: [PATCH 1/5] -replace use of query object when resolving ip addresses
+ -grooming -should fix compile errors with Boost >= 1.87
 
 ---
- UI/CUIWnd.cpp | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ client/ClientNetworking.cpp | 177 +++++++++++++++++++-----------------
+ 1 file changed, 96 insertions(+), 81 deletions(-)
 
-diff --git a/UI/CUIWnd.cpp b/UI/CUIWnd.cpp
-index c7f889982de..c5b176b8dd9 100644
---- a/UI/CUIWnd.cpp
-+++ b/UI/CUIWnd.cpp
-@@ -123,6 +123,40 @@ namespace {
-         std::string::size_type name_len = mode_substr_pos - prefix_len;
-         return option_name.substr(prefix_len, name_len);
+diff --git a/client/ClientNetworking.cpp b/client/ClientNetworking.cpp
+index 1bc598e92cd..116821c3ee0 100644
+--- a/client/ClientNetworking.cpp
++++ b/client/ClientNetworking.cpp
+@@ -38,7 +38,10 @@ namespace std {
+ #endif
+ 
+ 
++static_assert(BOOST_VERSION >= 106600); // when udp::resolver::resolve appears
++
+ using boost::asio::ip::tcp;
++using boost::asio::ip::udp;
+ using namespace Networking;
+ 
+ namespace {
+@@ -53,50 +56,45 @@ namespace {
+         ServerDiscoverer(boost::asio::io_context& io_context) :
+             m_io_context(&io_context),
+             m_timer(io_context),
+-            m_socket(io_context),
+-            m_recv_buf(),
+-            m_receive_successful(false),
+-            m_server_name()
++            m_socket(io_context)
+         {}
+ 
+-        const ServerList& Servers() const
+-        { return m_servers; }
++        const ServerList& Servers() const noexcept { return m_servers; }
+ 
+         void DiscoverServers() {
+             using namespace boost::asio::ip;
++            using namespace boost::asio;
+             udp::resolver resolver(*m_io_context);
+-            udp::resolver::query query(udp::v4(), "255.255.255.255",
+-                                       std::to_string(Networking::DiscoveryPort()),
+-                                       resolver_query_base::address_configured |
+-                                       resolver_query_base::numeric_service);
+-            udp::resolver::iterator end_it;
+-            for (auto it = resolver.resolve(query); it != end_it; ++it) {
+-                udp::endpoint receiver_endpoint = *it;
++            const auto results = resolver.resolve(udp::v4(), "255.255.255.255",
++                                                  std::to_string(Networking::DiscoveryPort()),
++                                                  resolver_query_base::address_configured |
++                                                  resolver_query_base::numeric_service);
+ 
++            for (const auto& entry : results) {
++                udp::endpoint receiver_endpoint = entry.endpoint();
+                 m_socket.close();
+                 m_socket.open(udp::v4());
+-                m_socket.set_option(boost::asio::socket_base::broadcast(true));
++                m_socket.set_option(socket_base::broadcast(true));
+ 
+-                m_socket.send_to(boost::asio::buffer(DISCOVERY_QUESTION),
++                m_socket.send_to(buffer(DISCOVERY_QUESTION),
+                                  receiver_endpoint);
+ 
+                 m_socket.async_receive_from(
+-                    boost::asio::buffer(m_recv_buf),
++                    buffer(m_recv_buf),
+                     m_sender_endpoint,
+                     boost::bind(&ServerDiscoverer::HandleReceive,
+                                 this,
+-                                boost::asio::placeholders::error,
+-                                boost::asio::placeholders::bytes_transferred));
++                                placeholders::error,
++                                placeholders::bytes_transferred));
+ 
+                 m_timer.expires_after(std::chrono::seconds(2));
+                 m_timer.async_wait(boost::bind(&ServerDiscoverer::CloseSocket, this));
+                 m_io_context->run();
+                 m_io_context->reset();
+                 if (m_receive_successful) {
+-                    boost::asio::ip::address address = m_server_name == "localhost" ?
+-                        boost::asio::ip::address::from_string("127.0.0.1") :
+-                        m_sender_endpoint.address();
+-                    m_servers.push_back({address, m_server_name});
++                    auto address = (m_server_name == "localhost") ?
++                        address::from_string("127.0.0.1") : m_sender_endpoint.address();
++                    m_servers.emplace_back(address, m_server_name);
+                 }
+                 m_receive_successful = false;
+                 m_server_name.clear();
+@@ -128,24 +126,21 @@ namespace {
+             }
+         }
+ 
+-        void CloseSocket()
+-        { m_socket.close(); }
++        void CloseSocket() { m_socket.close(); }
+ 
+-        boost::asio::io_context*            m_io_context;
++        boost::asio::io_context* const      m_io_context;
+         boost::asio::high_resolution_timer  m_timer;
+-        boost::asio::ip::udp::socket        m_socket;
++        udp::socket             m_socket;
+ 
+-        std::array<char, 1024>              m_recv_buf = {};
++        std::array<char, 1024>  m_recv_buf = {};
+ 
+-        boost::asio::ip::udp::endpoint      m_sender_endpoint;
+-        bool                                m_receive_successful = false;
+-        std::string                         m_server_name;
+-        ServerList                          m_servers;
++        udp::endpoint           m_sender_endpoint;
++        std::string             m_server_name;
++        ServerList              m_servers;
++        bool                    m_receive_successful = false;
+     };
+ }
+ 
+-
+-
+ class ClientNetworking::Impl {
+ public:
+     /** The type of list returned by a call to DiscoverLANServers(). */
+@@ -207,23 +202,32 @@ class ClientNetworking::Impl {
+         Remove the message from the incoming message queue. */
+     boost::optional<Message> GetMessage();
+ 
+-    /** Disconnects the client from the server. */
+     void DisconnectFromServer();
+ 
+-    /** Sets player ID for this client. */
+     void SetPlayerID(int player_id);
+ 
+-    /** Sets Host player ID. */
+     void SetHostPlayerID(int host_player_id) noexcept { m_host_player_id = host_player_id; }
+ 
+-    /** Get authorization roles access. */
+     Networking::AuthRoles& AuthorizationRoles() noexcept { return m_roles; }
+ 
+ private:
+     void HandleException(const boost::system::system_error& error);
+-    void HandleConnection(const boost::system::error_code& error,
+-                          tcp::resolver::iterator endpoint_it);
+-    void HandleResolve(const boost::system::error_code& error, tcp::resolver::iterator results);
++
++    using results_type = tcp::resolver::results_type;
++    using results_iterator = results_type::iterator;
++
++    void HandleConnection(const boost::system::error_code& error, const auto& results)
++    { HandleConnection(error, results.begin(), results.end()); }
++
++    void HandleConnection(const boost::system::error_code& error, results_iterator endpoint_it,
++                          const results_iterator end_of_endpoints_it);
++
++    void HandleResolve(const boost::system::error_code& error, const auto& results)
++    { HandleResolve(error, results.begin(), results.end()); }
++
++    void HandleResolve(const boost::system::error_code& error, const results_iterator results_it,
++                       const results_iterator end_of_endpoints_it);
++
+     void HandleDeadlineTimeout(const boost::system::error_code& error);
+ 
+     void NetworkingThread(const std::shared_ptr<const ClientNetworking> self);
+@@ -244,10 +248,10 @@ class ClientNetworking::Impl {
+     Networking::AuthRoles m_roles;
+ 
+     boost::asio::io_context            m_io_context;
+-    boost::asio::ip::tcp::socket       m_socket;
++    tcp::socket                        m_socket;
+     boost::asio::high_resolution_timer m_deadline_timer;
+     boost::asio::high_resolution_timer m_reconnect_timer;
+-    tcp::resolver::iterator            m_resolver_results;
++    results_iterator                   m_resolver_results_it;
+     bool                               m_deadline_has_expired = false;
+ 
+     // m_mutex guards m_incoming_message, m_rx_connected and m_tx_connected which are written by
+@@ -360,14 +364,13 @@ bool ClientNetworking::Impl::ConnectToServer(const ClientNetworking* const self,
+ 
+     using namespace boost::asio::ip;
+     tcp::resolver resolver(m_io_context);
+-    tcp::resolver::query query(ip_address,
+-                               std::to_string(Networking::MessagePort()),
+-                               resolver_query_base::numeric_service);
+ 
+-    // Resolve the query - will try to connect on success.
+-    resolver.async_resolve(query, [this](const auto& err, const auto& results) {
+-        HandleResolve(err, results); 
+-    });
++    const auto resolve_handler = [this](const auto& err, tcp::resolver::results_type results)
++    { HandleResolve(err, results); };
++
++    resolver.async_resolve(ip_address, std::to_string(Networking::MessagePort()),
++                           resolver_query_base::numeric_service, resolve_handler);
++
+ 
+     TraceLogger(network) << "ClientNetworking::Impl::ConnectToServer() - Resolving...";
+     m_io_context.run_one();
+@@ -465,49 +468,60 @@ boost::optional<Message> ClientNetworking::Impl::GetMessage() {
+ }
+ 
+ void ClientNetworking::Impl::HandleConnection(const boost::system::error_code& error,
+-                                              tcp::resolver::iterator endpoint_it)
++                                              results_iterator endpoint_it,
++                                              const results_iterator end_of_endpoints_it)
+ {
++    if (endpoint_it == end_of_endpoints_it)
++        return;
++
+     DebugLogger(network) << "ClientNetworking::HandleConnection : " << endpoint_it->host_name();
++
+     if (error == boost::asio::error::operation_aborted) {
+         DebugLogger(network) << "ClientNetworking::HandleConnection : Operation aborted.";
+         return;
+-    }
+-    else if (error) {
++
++    } else if (error) {
+         DebugLogger(network) << "ClientNetworking::HandleConnection : connection error #"
+-                             << error.value() <<" \"" << error.message() << "\""
++                             << error.value() << " \"" << error.message() << "\""
+                              << "... retrying";
+         m_socket.close();
+         endpoint_it++;
+-        if (endpoint_it == tcp::resolver::iterator())
+-        {
+-            endpoint_it = m_resolver_results;
+-            m_reconnect_timer.expires_from_now(std::chrono::milliseconds(100));
+-            m_reconnect_timer.async_wait([this, endpoint_it](const auto& err) {
++
++        if (endpoint_it == end_of_endpoints_it) {
++            endpoint_it = m_resolver_results_it;
++
++            const auto handle_connection_deadlined =
++                [this, endpoint_it, end_of_endpoints_it](const auto& error)
++            {
+                 // If the m_deadline_timer has expired, it will try to cancel
+                 // this timer and set the m_deadline_has_expired flag.
+                 // If expiry of both timers is sufficiently close together
+                 // this callback may have already been scheduled and this timer
+                 // can no longer be canceled - so need to check the flag here.
+-                if (err == boost::asio::error::operation_aborted
+-                    || m_deadline_has_expired)
+-                {
++                if (error == boost::asio::error::operation_aborted || m_deadline_has_expired) {
+                     TraceLogger(network) << "ClientNetworking::Impl::m_reconnect_timer::async_wait - Canceling reconnect attempts due to deadline timeout";
+                     return;
+-
+                 }
++
+                 TraceLogger(network) << "ClientNetworking::Impl::m_reconnect_timer::async_wait - Scheduling another connection attempt";
+-                m_socket.async_connect(*endpoint_it, [this, endpoint_it](const auto& error) {
+-                    HandleConnection(error, endpoint_it);
+-                });
+-            });
++                const auto handle_connection = [this, endpoint_it, end_of_endpoints_it](const auto& error)
++                { HandleConnection(error, endpoint_it, end_of_endpoints_it); };
++
++                m_socket.async_connect(*endpoint_it, handle_connection);
++            };
++
++            m_reconnect_timer.expires_from_now(std::chrono::milliseconds(100));
++            m_reconnect_timer.async_wait(handle_connection_deadlined);
++
+         } else {
+-            m_socket.async_connect(*endpoint_it, [this, endpoint_it](const auto& error) {
+-                HandleConnection(error, endpoint_it);
+-            });
++            const auto handle_connection = [this, endpoint_it, end_of_endpoints_it](const auto& error)
++            { HandleConnection(error, endpoint_it, end_of_endpoints_it); };
++
++            m_socket.async_connect(*endpoint_it, handle_connection);
+         }
+     } else {
+         m_deadline_timer.cancel();
+-        const auto& endpoint = endpoint_it->endpoint();
++        const auto endpoint = endpoint_it->endpoint();
+         InfoLogger(network) << "Connected to server at " << endpoint.address() << ":" << endpoint.port();
+         std::scoped_lock lock(m_mutex);
+         m_rx_connected = true;
+@@ -515,8 +529,8 @@ void ClientNetworking::Impl::HandleConnection(const boost::system::error_code& e
      }
+ }
+ 
+-void ClientNetworking::Impl::HandleResolve(const boost::system::error_code& error, 
+-                                           tcp::resolver::iterator results)
++void ClientNetworking::Impl::HandleResolve(const boost::system::error_code& error,
++                                           const results_iterator results_it, results_iterator results_end_it)
+ {
+     TraceLogger(network) << "ClientNetworking::Impl::HandleResolve(" << error << ")";
+     if (error) {
+@@ -525,20 +539,21 @@ void ClientNetworking::Impl::HandleResolve(const boost::system::error_code& erro
+         return;
+     }
+ 
+-    m_resolver_results = results;
++    m_resolver_results_it = results_it;
+ 
+     DebugLogger(network) << "Attempt to connect to server at one of these addresses:";
+-    tcp::resolver::iterator end_it;
+-    for (tcp::resolver::iterator it = results; it != end_it; ++it) {
 +
-+    std::string_view to_string(GG::Font::TextElement::TextElementType t) {
-+        switch (t) {
-+        case GG::Font::TextElement::TextElementType::OPEN_TAG: return "opentag";
-+        case GG::Font::TextElement::TextElementType::CLOSE_TAG: return "closetag";
-+        case GG::Font::TextElement::TextElementType::TEXT: return "text";
-+        case GG::Font::TextElement::TextElementType::WHITESPACE: return "ws";
-+        case GG::Font::TextElement::TextElementType::NEWLINE: return "newline";
-+        default: return "???";
-+        }
-+    }
++    for (auto it = results_it; it != results_end_it; ++it) {
+         DebugLogger(network) << "host_name: " << it->host_name()
+-            << "  address: " << it->endpoint().address()
+-            << "  port: " << it->endpoint().port();
++                             << "  address: " << it->endpoint().address()
++                             << "  port: " << it->endpoint().port();
+     }
+ 
+     m_socket.close();
+-    m_socket.async_connect(*results, [this, results](const auto& error) {
+-        HandleConnection(error, results); 
+-    });
++    const auto handle_connection = [this, results_it, results_end_it](const auto& error)
++    { HandleConnection(error, results_it, results_end_it); };
++    m_socket.async_connect(*results_it, handle_connection);
 +
-+    void TestParse(std::string text, const GG::Font& font) {
-+        auto parse_results1 = font.ExpensiveParseFromTextToTextElements(text, GG::FORMAT_LEFT);
-+        std::cout << "text: \"" << text << "\"\n . parsed as:  " << std::flush << [&]() {
-+            std::string retval;
-+            for (const auto& res : parse_results1) {
-+                retval += "\n ... ";
-+                retval += to_string(res.Type());
-+                retval += ": \"" + std::string(res.text) + "\"  ";
-+            }
-+            return retval;
-+            }() << "\n\n";
-+    }
-+
-+    bool TestFontParseLogResults() {
-+        const auto font = ClientUI::GetFont();
-+        TestParse("some simple text", *font);
-+        TestParse("", *font);
-+        TestParse("line1\nline2\n\nline4\n", *font);
-+        TestParse("plain<i>ital</i><u>", *font);
-+
-+        return true;
-+    }
+     TraceLogger(network) << "Return from ClientNetworking::Impl::HandleResolve()";
+ }
+ 
+@@ -724,7 +739,7 @@ void ClientNetworking::Impl::DisconnectFromServerImpl() {
+ 
+     // Note: m_socket.is_open() may be independently true/false on each of these checks.
+     if (m_socket.is_open())
+-        m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
++        m_socket.shutdown(tcp::socket::shutdown_both);
  }
  
  
-@@ -156,6 +190,9 @@ CUIWnd::CUIWnd(std::string wnd_name, GG::Flags<GG::WndFlag> flags,
+
+From 937a934606cf5abd84da761b31610f6e3684e24f Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 00:35:16 +0100
+Subject: [PATCH 2/5] replace deprecated functions
+
+---
+ client/ClientNetworking.cpp | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/client/ClientNetworking.cpp b/client/ClientNetworking.cpp
+index 116821c3ee0..c36bda80095 100644
+--- a/client/ClientNetworking.cpp
++++ b/client/ClientNetworking.cpp
+@@ -90,10 +90,10 @@ namespace {
+                 m_timer.expires_after(std::chrono::seconds(2));
+                 m_timer.async_wait(boost::bind(&ServerDiscoverer::CloseSocket, this));
+                 m_io_context->run();
+-                m_io_context->reset();
++                m_io_context->restart();
+                 if (m_receive_successful) {
+                     auto address = (m_server_name == "localhost") ?
+-                        address::from_string("127.0.0.1") : m_sender_endpoint.address();
++                        make_address("127.0.0.1") : m_sender_endpoint.address();
+                     m_servers.emplace_back(address, m_server_name);
+                 }
+                 m_receive_successful = false;
+@@ -377,13 +377,13 @@ bool ClientNetworking::Impl::ConnectToServer(const ClientNetworking* const self,
+     TraceLogger(network) << "ClientNetworking::Impl::ConnectToServer() - Resolved.";
+     // configure the deadline timer to close socket and cancel connection attempts at timeout
+     m_deadline_has_expired = false;
+-    m_deadline_timer.expires_from_now(timeout);
++    m_deadline_timer.expires_after(timeout);
+     m_deadline_timer.async_wait([this](const auto& err) { HandleDeadlineTimeout(err); });
  
- void CUIWnd::CompleteConstruction() {
-     GG::Wnd::CompleteConstruction();
-+
-+    static const bool dummy = TestFontParseLogResults();
-+
-     Init();
-     ValidatePosition();
-     SetDefaultedOptions();
+     try {
+         TraceLogger(network) << "ClientNetworking::Impl::ConnectToServer() - Starting asio event loop";
+         m_io_context.run(); // blocks until connection or timeout
+-        m_io_context.reset();
++        m_io_context.restart();
+ 
+         if (IsConnected()) {
+             const auto connection_time = Clock::now() - start_time;
+@@ -438,7 +438,7 @@ void ClientNetworking::Impl::DisconnectFromServer() {
+     }
+ 
+     if (is_open)
+-        m_io_context.post(boost::bind(&ClientNetworking::Impl::DisconnectFromServerImpl, this));
++        boost::asio::post(m_io_context, boost::bind(&ClientNetworking::Impl::DisconnectFromServerImpl, this));
+ }
+ 
+ void ClientNetworking::Impl::SetPlayerID(int player_id) {
+@@ -452,7 +452,7 @@ void ClientNetworking::Impl::SendMessage(Message&& message) {
+         return;
+     }
+     TraceLogger(network) << "ClientNetworking::SendMessage() : sending message " << message;
+-    m_io_context.post(boost::bind(&ClientNetworking::Impl::SendMessageImpl, this, std::move(message)));
++    boost::asio::post(m_io_context, boost::bind(&ClientNetworking::Impl::SendMessageImpl, this, std::move(message)));
+ }
+ 
+ void ClientNetworking::Impl::SendSelfMessage(Message&& message) {
+@@ -510,7 +510,7 @@ void ClientNetworking::Impl::HandleConnection(const boost::system::error_code& e
+                 m_socket.async_connect(*endpoint_it, handle_connection);
+             };
+ 
+-            m_reconnect_timer.expires_from_now(std::chrono::milliseconds(100));
++            m_reconnect_timer.expires_after(std::chrono::milliseconds(100));
+             m_reconnect_timer.async_wait(handle_connection_deadlined);
+ 
+         } else {
+@@ -601,7 +601,7 @@ void ClientNetworking::Impl::NetworkingThread(const std::shared_ptr<const Client
+     }
+     decltype(m_outgoing_messages) empty_queue;
+     m_outgoing_messages.swap(empty_queue); // clear queue
+-    m_io_context.reset();
++    m_io_context.restart();
+     { // Mutex scope
+         std::scoped_lock lock(m_mutex);
+         m_rx_connected = false;
+
+From e376120c24b4cb10ddf978f32174b85cc8d2392f Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 15:49:21 +0100
+Subject: [PATCH 3/5] more deprecated function replacement
+
+---
+ server/ServerNetworking.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/server/ServerNetworking.cpp b/server/ServerNetworking.cpp
+index 019d8b3d03e..a20bbdf9898 100644
+--- a/server/ServerNetworking.cpp
++++ b/server/ServerNetworking.cpp
+@@ -215,7 +215,8 @@ void PlayerConnection::SendMessage(const Message& message, int empire_id, int tu
+         MessageSentSignal(false, empire_id, turn);
+         return;
+     }
+-    m_service.post(boost::bind(&PlayerConnection::SendMessageImpl, shared_from_this(), message, empire_id, turn));
++    boost::asio::post(m_service, boost::bind(&PlayerConnection::SendMessageImpl, shared_from_this(),
++                                             message, empire_id, turn));
+ }
+ 
+ bool PlayerConnection::IsEstablished() const noexcept {
+
+From 84ab1b2e64e9f1a639d388b272b9ff9a6181ef80 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 11:35:27 +0100
+Subject: [PATCH 4/5] -don't return empty list of servers when not connected
+ -use IP as server name if the server name is empty
+
+---
+ client/ClientNetworking.cpp | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/client/ClientNetworking.cpp b/client/ClientNetworking.cpp
+index c36bda80095..ff87da6b32b 100644
+--- a/client/ClientNetworking.cpp
++++ b/client/ClientNetworking.cpp
+@@ -317,13 +317,11 @@ bool ClientNetworking::Impl::HasAuthRole(Networking::RoleType role) const
+ { return m_roles.HasRole(role); }
+ 
+ ClientNetworking::ServerNames ClientNetworking::Impl::DiscoverLANServerNames() {
+-    if (!IsConnected())
+-        return ServerNames();
+     ServerDiscoverer discoverer(m_io_context);
+     discoverer.DiscoverServers();
+     ServerNames names;
+-    for (const auto& server : discoverer.Servers())
+-        names.push_back(server.second);
++    for (const auto& [server_address, server_name] : discoverer.Servers())
++        names.push_back(server_name.empty() ? server_address.to_string() : server_name);
+     return names;
+ }
+ 
+
+From 05ced30ee8ecd3f59d703670bbd67af1fcfae4a1 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 21 Dec 2024 11:36:31 +0100
+Subject: [PATCH 5/5] move strings instead of making copies
+
+---
+ UI/ServerConnectWnd.cpp | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/UI/ServerConnectWnd.cpp b/UI/ServerConnectWnd.cpp
+index 4dc465e34c7..2dbae4fbc1c 100644
+--- a/UI/ServerConnectWnd.cpp
++++ b/UI/ServerConnectWnd.cpp
+@@ -197,11 +197,13 @@ namespace {
+ 
+ void ServerConnectWnd::PopulateServerList() {
+     m_servers_lb->Clear();
+-    const auto server_names = GGHumanClientApp::GetApp()->Networking().DiscoverLANServerNames();
+-    for (const auto& server : server_names) {
+-        auto row = GG::Wnd::Create<GG::ListBox::Row>();
+-        row->push_back(GG::Wnd::Create<CUILabel>(server));
+-        m_servers_lb->Insert(row);
++    {
++        auto server_names = GGHumanClientApp::GetApp()->Networking().DiscoverLANServerNames();
++        for (const auto& server_name : server_names) {
++            auto row = GG::Wnd::Create<GG::ListBox::Row>();
++            row->push_back(GG::Wnd::Create<CUILabel>(std::move(server_name)));
++            m_servers_lb->Insert(row);
++        }
+     }
+     // make local copies of server name options, since code below will possibly add more options.
+     // that could invalidate any views into names of existing options.
