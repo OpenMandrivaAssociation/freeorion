@@ -1,7 +1,7 @@
 From d0055cbc7d96f05c587a709f983724c5c7505b73 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sat, 21 Dec 2024 21:58:50 +0100
-Subject: [PATCH 1/5] add Font text parsing tests
+Subject: [PATCH 1/7] add Font text parsing tests
 
 ---
  UI/CUIWnd.cpp | 37 +++++++++++++++++++++++++++++++++++++
@@ -66,7 +66,7 @@ index c7f889982de..c5b176b8dd9 100644
 From 8adcd6e22ade7002327e0c1bae09e48822b3ef18 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 17:40:16 +0100
-Subject: [PATCH 2/5] use a getter with static TagHandler instead of file-scope
+Subject: [PATCH 2/7] use a getter with static TagHandler instead of file-scope
  object
 
 ---
@@ -150,7 +150,7 @@ index a4004ec6e67..0dbcad0a1a5 100644
 From 3a307d82e6e2a0ba9fe4e5c9f14169529a0d89fb Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 17:58:02 +0100
-Subject: [PATCH 3/5] more ExpensiveParseFromTextToTextElements debugging
+Subject: [PATCH 3/7] more ExpensiveParseFromTextToTextElements debugging
  output
 
 ---
@@ -199,7 +199,7 @@ index 0dbcad0a1a5..46ecf1af16c 100644
 From f497effda00c4fdd5bc15aa59aeac58e19750e41 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 18:59:06 +0100
-Subject: [PATCH 4/5] simplify and separate ComplexRegex and TagHandler classes
+Subject: [PATCH 4/7] simplify and separate ComplexRegex and TagHandler classes
 
 ---
  GG/src/Font.cpp | 105 ++++++++++++++++++++----------------------------
@@ -392,7 +392,7 @@ index 46ecf1af16c..15275970a4a 100644
 From 9e897f80641ee00cde1959539e6dd4ecd641308d Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 19:06:19 +0100
-Subject: [PATCH 5/5] debug output on construction
+Subject: [PATCH 5/7] debug output on construction
 
 ---
  GG/src/Font.cpp | 5 +++++
@@ -421,3 +421,202 @@ index 15275970a4a..522a2c5416b 100644
              // Synonyms for s1 thru s5 sub matches
              xpr::mark_tag tag_name_tag(tag_name_tag_idx);
              xpr::mark_tag open_bracket_tag(open_bracket_tag_idx);
+
+From 583494d50f75f4d836ad971d8984abc52de42428 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Fri, 27 Dec 2024 00:09:55 +0100
+Subject: [PATCH 6/7] add regex interator testing and debug output
+
+---
+ UI/CUIWnd.cpp | 39 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 38 insertions(+), 1 deletion(-)
+
+diff --git a/UI/CUIWnd.cpp b/UI/CUIWnd.cpp
+index c5b176b8dd9..22aa77b730a 100644
+--- a/UI/CUIWnd.cpp
++++ b/UI/CUIWnd.cpp
+@@ -95,6 +95,9 @@ void CUI_PinButton::Toggle(bool pinned) {
+     SetRolloverGraphic (GetButtonSubTexture(pinned ? "pinned_mouseover.png" : "pin_mouseover.png"));
+ }
+ 
++
++#include <boost/xpressive/xpressive.hpp>
++
+ ////////////////////////////////////////////////
+ // CUIWnd
+ ////////////////////////////////////////////////
+@@ -135,6 +138,33 @@ namespace {
+         }
+     }
+ 
++    void TestRegexIteratorStuff(const std::string text) {
++        std::cout << "Testing Regex Iterator Stuff for text: " << text << std::endl;
++
++        namespace xpr = boost::xpressive;
++
++        static const xpr::sregex WHITESPACE =
++            (*xpr::blank >> (xpr::_ln | (xpr::set = '\n', '\r', '\f'))) | +xpr::blank;
++
++        static const xpr::sregex TEXT =
++            ('<' >> *~xpr::set[xpr::_s | '<']) | (+~xpr::set[xpr::_s | '<']);
++
++        constexpr std::size_t whitespace_tag_idx = 10;
++        constexpr std::size_t text_tag_idx = 20;
++
++        xpr::mark_tag whitespace_tag(whitespace_tag_idx);
++        xpr::mark_tag text_tag(text_tag_idx);
++        xpr::sregex test_regex = 
++            (whitespace_tag = WHITESPACE) |
++            (text_tag = TEXT);
++
++        xpr::sregex_iterator it(text.begin(), text.end(), test_regex);
++        std::cout << " ... got regex iterator " << std::endl;
++
++        const xpr::sregex_iterator end_it;
++        std::cout << " ... it == end_it ?: " << std::flush << (it == end_it) << std::endl;
++    }
++
+     void TestParse(std::string text, const GG::Font& font) {
+         auto parse_results1 = font.ExpensiveParseFromTextToTextElements(text, GG::FORMAT_LEFT);
+         std::cout << "text: \"" << text << "\"\n . parsed as:  " << std::flush << [&]() {
+@@ -149,9 +179,16 @@ namespace {
+     }
+ 
+     bool TestFontParseLogResults() {
++        std::cout << "Testing Regex Testing" << std::endl;
++        TestRegexIteratorStuff("");
++        TestRegexIteratorStuff("some simple text");
++
++        std::cout << "Testing Font Text Parsing" << std::endl;
++
+         const auto font = ClientUI::GetFont();
+-        TestParse("some simple text", *font);
++
+         TestParse("", *font);
++        TestParse("some simple text", *font);
+         TestParse("line1\nline2\n\nline4\n", *font);
+         TestParse("plain<i>ital</i><u>", *font);
+ 
+
+From c98a6a2dd26d36d33d13c57906dcf0889cc7ab36 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Fri, 27 Dec 2024 01:21:47 +0100
+Subject: [PATCH 7/7] more regex / interator tests
+
+---
+ UI/CUIWnd.cpp | 82 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 79 insertions(+), 3 deletions(-)
+
+diff --git a/UI/CUIWnd.cpp b/UI/CUIWnd.cpp
+index 22aa77b730a..612745453e1 100644
+--- a/UI/CUIWnd.cpp
++++ b/UI/CUIWnd.cpp
+@@ -95,7 +95,7 @@ void CUI_PinButton::Toggle(bool pinned) {
+     SetRolloverGraphic (GetButtonSubTexture(pinned ? "pinned_mouseover.png" : "pin_mouseover.png"));
+ }
+ 
+-
++#include <boost/xpressive/regex_actions.hpp>
+ #include <boost/xpressive/xpressive.hpp>
+ 
+ ////////////////////////////////////////////////
+@@ -165,6 +165,78 @@ namespace {
+         std::cout << " ... it == end_it ?: " << std::flush << (it == end_it) << std::endl;
+     }
+ 
++    void TestFullFontRegex(std::string text) {
++        namespace xpr = boost::xpressive;
++
++        constexpr std::size_t full_regex_tag_idx = 0;
++        constexpr std::size_t tag_name_tag_idx = 1;
++        constexpr std::size_t open_bracket_tag_idx = 2;
++        constexpr std::size_t close_bracket_tag_idx = 3;
++        constexpr std::size_t whitespace_tag_idx = 4;
++        constexpr std::size_t text_tag_idx = 5;
++
++        xpr::mark_tag tag_name_tag(tag_name_tag_idx);
++        xpr::mark_tag open_bracket_tag(open_bracket_tag_idx);
++        xpr::mark_tag close_bracket_tag(close_bracket_tag_idx);
++        xpr::mark_tag whitespace_tag(whitespace_tag_idx);
++        xpr::mark_tag text_tag(text_tag_idx);
++
++        // -+ 'non-greedy',   ~ 'not',   set[|] 'set',    _s 'space' = 'anything but space or <'
++        static const xpr::sregex TAG_PARAM =
++            -+~xpr::set[xpr::_s | '<'];
++
++        //+_w one or more greedy word chars,  () group no capture,  [] semantic operation
++        const xpr::sregex TAG_NAME =
++            (+xpr::_w)[xpr::check([](auto) { return true; })];
++
++        // *blank  'zero or more greedy whitespace',   >> 'followed by',    _ln 'newline',
++        // (set = 'a', 'b') is '[ab]',    +blank 'one or more greedy blank'
++        static const xpr::sregex WHITESPACE =
++            (*xpr::blank >> (xpr::_ln | (xpr::set = '\n', '\r', '\f'))) | +xpr::blank;
++
++        // < followed by not space or <   or one or more not space or <
++        static const xpr::sregex TEXT =
++            ('<' >> *~xpr::set[xpr::_s | '<']) | (+~xpr::set[xpr::_s | '<']);
++
++        xpr::sregex regex =
++            ('<'                                                                    // < open tag
++                >> (tag_name_tag = TAG_NAME)                                           // TAG_NAME 
++                >> xpr::repeat<0, 9>(+xpr::blank >> TAG_PARAM)                         // repeat 0 to 9 times: blank followed by TAG_PARAM
++                >> (open_bracket_tag.proto_base() = '>')                               // > close tag
++                ) |
++
++            ("</"                                                                           // </ open tag with slash
++                >> (tag_name_tag = TAG_NAME)                                                   // TAG_NAME
++                >> (close_bracket_tag.proto_base() = '>')                                      // > close tag
++                ) |
++
++            (whitespace_tag = WHITESPACE) |
++
++            (text_tag = TEXT);
++
++        std::cout << "text: " << text << std::endl;;
++
++        std::string retval;
++        retval.reserve(text.size());
++
++        // scan through matched markup and text, saving only the non-tag-text
++        xpr::sregex_iterator it(text.begin(), text.end(), regex);
++        const xpr::sregex_iterator end_it;
++        for (; it != end_it; ++it) {
++            auto& text_match = (*it)[text_tag_idx];
++            if (text_match.matched) {
++                retval.append(text_match.first, text_match.second);
++
++            } else {
++                auto& whitespace_match = (*it)[whitespace_tag_idx];
++                if (whitespace_match.matched)
++                    retval.append(whitespace_match.first, whitespace_match.second);
++            }
++        }
++
++        std::cout << "stripped text: " << retval << std::endl;
++    }
++
+     void TestParse(std::string text, const GG::Font& font) {
+         auto parse_results1 = font.ExpensiveParseFromTextToTextElements(text, GG::FORMAT_LEFT);
+         std::cout << "text: \"" << text << "\"\n . parsed as:  " << std::flush << [&]() {
+@@ -175,14 +247,18 @@ namespace {
+                 retval += ": \"" + std::string(res.text) + "\"  ";
+             }
+             return retval;
+-            }() << "\n\n";
++        }() << "\n\n";
+     }
+ 
+     bool TestFontParseLogResults() {
+-        std::cout << "Testing Regex Testing" << std::endl;
++        std::cout << "Testing Regex Iterator Stuff" << std::endl;
+         TestRegexIteratorStuff("");
+         TestRegexIteratorStuff("some simple text");
+ 
++        std::cout << "Testing Tag Stripping" << std::endl;
++        TestFullFontRegex("");
++        TestFullFontRegex("blah <tag>hmm</tag>");
++
+         std::cout << "Testing Font Text Parsing" << std::endl;
+ 
+         const auto font = ClientUI::GetFont();
