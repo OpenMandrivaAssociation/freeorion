@@ -1,23 +1,9 @@
-From 963e6b30f6738611c84eba54f77a5e9169f87085 Mon Sep 17 00:00:00 2001
-From: geoffthemedio <geoffthemedio@gmail.com>
-Date: Sat, 28 Dec 2024 01:27:23 +0100
-Subject: [PATCH] remove text combining inner loop while iterating over regex
- matches of parsed text, which probably was leading to an invalid iterator
- dereference
-
----
- GG/src/Font.cpp | 29 +++++------------------------
- 1 file changed, 5 insertions(+), 24 deletions(-)
-
-diff --git a/GG/src/Font.cpp b/GG/src/Font.cpp
-index 83f78c7dd6a..8cbbb2f1cee 100644
---- a/GG/src/Font.cpp
-+++ b/GG/src/Font.cpp
-@@ -2744,31 +2744,15 @@ Font::ExpensiveParseFromTextToTextElements(const std::string& text, const Flags<
-     // Fetch and use the regular expression from the TagHandler which parses all the known XML tags.
-     const sregex& regex = tag_handler.Regex(text, ignore_tags);
+diff -uraN freeorion-0.5.1-rc1/GG/src/Font.cpp omv-freeorion-0.5.1-rc1/GG/src/Font.cpp
+--- freeorion-0.5.1-rc1/GG/src/Font.cpp	2024-12-28 18:52:17.263482575 +0100
++++ omv-freeorion-0.5.1-rc1/GG/src/Font.cpp	2024-12-28 18:51:01.415712407 +0100
+@@ -2758,29 +2758,13 @@
      sregex_iterator it(text.begin(), text.end(), regex);
--
+ 
      const sregex_iterator end_it;
 -    while (it != end_it)
 -    {
@@ -25,7 +11,7 @@ index 83f78c7dd6a..8cbbb2f1cee 100644
 -        // If adjacent found substrings are all text, merge them into a single Substring.
 -        bool need_increment = true;
 -        Substring combined_text;
--        sub_match<std::string::const_iterator> const* text_match;
+-        sub_match<std::string::const_iterator> const* text_match = nullptr;
 -        while (it != end_it &&
 -               (text_match = &(*it)[text_tag_idx]) &&
 -               text_match->matched)
@@ -38,7 +24,6 @@ index 83f78c7dd6a..8cbbb2f1cee 100644
 -            ++it;
 -        }
  
-+    for (; it != end_it; ++it) {
          const auto& it_elem = *it;
  
 -        if (!combined_text.empty()) {
@@ -50,11 +35,10 @@ index 83f78c7dd6a..8cbbb2f1cee 100644
  
          } else if (it_elem[open_bracket_tag_idx].matched) {
              // Open XML tag.
-@@ -2808,9 +2792,6 @@ Font::ExpensiveParseFromTextToTextElements(const std::string& text, const Flags<
-             if (last_char == '\n' || last_char == '\f' || last_char == '\r')
+@@ -2821,8 +2805,6 @@
                  text_elements.emplace_back(NEWLINE);
          }
--
+ 
 -        if (need_increment)
 -            ++it;
      }
