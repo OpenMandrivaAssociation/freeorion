@@ -1,7 +1,7 @@
 From d0055cbc7d96f05c587a709f983724c5c7505b73 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sat, 21 Dec 2024 21:58:50 +0100
-Subject: [PATCH 1/7] add Font text parsing tests
+Subject: [PATCH 1/8] add Font text parsing tests
 
 ---
  UI/CUIWnd.cpp | 37 +++++++++++++++++++++++++++++++++++++
@@ -66,7 +66,7 @@ index c7f889982de..c5b176b8dd9 100644
 From 8adcd6e22ade7002327e0c1bae09e48822b3ef18 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 17:40:16 +0100
-Subject: [PATCH 2/7] use a getter with static TagHandler instead of file-scope
+Subject: [PATCH 2/8] use a getter with static TagHandler instead of file-scope
  object
 
 ---
@@ -150,7 +150,7 @@ index a4004ec6e67..0dbcad0a1a5 100644
 From 3a307d82e6e2a0ba9fe4e5c9f14169529a0d89fb Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 17:58:02 +0100
-Subject: [PATCH 3/7] more ExpensiveParseFromTextToTextElements debugging
+Subject: [PATCH 3/8] more ExpensiveParseFromTextToTextElements debugging
  output
 
 ---
@@ -199,7 +199,7 @@ index 0dbcad0a1a5..46ecf1af16c 100644
 From f497effda00c4fdd5bc15aa59aeac58e19750e41 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 18:59:06 +0100
-Subject: [PATCH 4/7] simplify and separate ComplexRegex and TagHandler classes
+Subject: [PATCH 4/8] simplify and separate ComplexRegex and TagHandler classes
 
 ---
  GG/src/Font.cpp | 105 ++++++++++++++++++++----------------------------
@@ -392,7 +392,7 @@ index 46ecf1af16c..15275970a4a 100644
 From 9e897f80641ee00cde1959539e6dd4ecd641308d Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Sun, 22 Dec 2024 19:06:19 +0100
-Subject: [PATCH 5/7] debug output on construction
+Subject: [PATCH 5/8] debug output on construction
 
 ---
  GG/src/Font.cpp | 5 +++++
@@ -425,7 +425,7 @@ index 15275970a4a..522a2c5416b 100644
 From 583494d50f75f4d836ad971d8984abc52de42428 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Fri, 27 Dec 2024 00:09:55 +0100
-Subject: [PATCH 6/7] add regex interator testing and debug output
+Subject: [PATCH 6/8] add regex interator testing and debug output
 
 ---
  UI/CUIWnd.cpp | 39 ++++++++++++++++++++++++++++++++++++++-
@@ -501,7 +501,7 @@ index c5b176b8dd9..22aa77b730a 100644
 From c98a6a2dd26d36d33d13c57906dcf0889cc7ab36 Mon Sep 17 00:00:00 2001
 From: geoffthemedio <geoffthemedio@gmail.com>
 Date: Fri, 27 Dec 2024 01:21:47 +0100
-Subject: [PATCH 7/7] more regex / interator tests
+Subject: [PATCH 7/8] more regex / interator tests
 
 ---
  UI/CUIWnd.cpp | 82 +++++++++++++++++++++++++++++++++++++++++++++++++--
@@ -620,3 +620,68 @@ index 22aa77b730a..612745453e1 100644
          std::cout << "Testing Font Text Parsing" << std::endl;
  
          const auto font = ClientUI::GetFont();
+
+From eaa159992c5c0cd0f9e6c7ff79283aa44d3323f2 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Fri, 27 Dec 2024 22:57:35 +0100
+Subject: [PATCH 8/8] remove text combining inner loop while iterating over
+ regex matches of parsed text, which probably was leading to an invalid
+ iterator dereference
+
+---
+ GG/src/Font.cpp | 32 +++++++++-----------------------
+ 1 file changed, 9 insertions(+), 23 deletions(-)
+
+diff --git a/GG/src/Font.cpp b/GG/src/Font.cpp
+index 522a2c5416b..eea9fc71700 100644
+--- a/GG/src/Font.cpp
++++ b/GG/src/Font.cpp
+@@ -2763,29 +2763,18 @@ Font::ExpensiveParseFromTextToTextElements(const std::string& text, const Flags<
+     const sregex_iterator end_it;
+     std::cout << " ... it == end_it ?: " << std::flush << (it == end_it) << std::endl;
+ 
+-    while (it != end_it)
+-    {
+-        // Consolidate adjacent blocks of text.
+-        // If adjacent found substrings are all text, merge them into a single Substring.
+-        bool need_increment = true;
+-        Substring combined_text;
+-        sub_match<std::string::const_iterator> const* text_match = nullptr;
+-        while (it != end_it &&
+-               (text_match = &(*it)[text_tag_idx]) &&
+-               text_match->matched)
+-        {
+-            need_increment = false;
+-            if (combined_text.empty())
+-                combined_text = Substring(text, *text_match);
+-            else
+-                combined_text += *text_match;
+-            ++it;
+-        }
++    std::cout << " ... num matches: " << std::distance(it, end_it) << std::endl;
+ 
++    if (it != end_it)
++        std::cout << " ... iterating over regex matches...";
++
++    for (; it != end_it; ++it) {
+         const auto& it_elem = *it;
+ 
+-        if (!combined_text.empty()) {
+-            text_elements.emplace_back(combined_text); // Basic text element.
++        if (it_elem[text_tag_idx].matched) {
++            auto matched_text = Substring(text, it_elem[text_tag_idx]);
++            if (!matched_text.empty())
++                text_elements.emplace_back(matched_text); // Basic text element.
+ 
+         } else if (it_elem[open_bracket_tag_idx].matched) {
+             // Open XML tag.
+@@ -2825,9 +2814,6 @@ Font::ExpensiveParseFromTextToTextElements(const std::string& text, const Flags<
+             if (last_char == '\n' || last_char == '\f' || last_char == '\r')
+                 text_elements.emplace_back(NEWLINE);
+         }
+-
+-        if (need_increment)
+-            ++it;
+     }
+ 
+     // fill in the widths of code points in each TextElement
