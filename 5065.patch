@@ -1,0 +1,322 @@
+From 84e5682617ca14e6abdd3c285ef8b24e19ec8d82 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Tue, 31 Dec 2024 22:11:19 +0100
+Subject: [PATCH] move static lexer into a getter to avoid any potential order
+ of init issues
+
+---
+ parse/BuildingsParser.cpp         | 2 +-
+ parse/DoubleValueRefParser.cpp    | 8 +++++---
+ parse/EmpireStatsParser.cpp       | 2 +-
+ parse/EncyclopediaParser.cpp      | 2 +-
+ parse/FieldsParser.cpp            | 2 +-
+ parse/FleetPlansParser.cpp        | 2 +-
+ parse/IntValueRefParser.cpp       | 8 +++++---
+ parse/ItemsParser.cpp             | 4 ++--
+ parse/Lexer.cpp                   | 2 --
+ parse/Lexer.h                     | 6 +++++-
+ parse/MonsterFleetPlansParser.cpp | 2 +-
+ parse/NamedValueRefParser.cpp     | 2 +-
+ parse/PoliciesParser.cpp          | 2 +-
+ parse/ShipDesignsParser.cpp       | 6 ++++--
+ parse/ShipHullsParser.cpp         | 2 +-
+ parse/ShipPartsParser.cpp         | 2 +-
+ parse/SpecialsParser.cpp          | 2 +-
+ parse/StringValueRefParser.cpp    | 6 ++++--
+ 18 files changed, 36 insertions(+), 26 deletions(-)
+
+diff --git a/parse/BuildingsParser.cpp b/parse/BuildingsParser.cpp
+index d760d9898ee..63a9aaa3c0f 100644
+--- a/parse/BuildingsParser.cpp
++++ b/parse/BuildingsParser.cpp
+@@ -251,7 +251,7 @@ namespace parse {
+         ScopedTimer timer("Buildings Parsing");
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, building_types);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, building_types);
+ 
+         py_grammar p = py_grammar(parser, building_types);
+         for (const auto& file : ListDir(path, IsFOCPyScript))
+diff --git a/parse/DoubleValueRefParser.cpp b/parse/DoubleValueRefParser.cpp
+index 94e4bfe7d96..8e25870d1b4 100644
+--- a/parse/DoubleValueRefParser.cpp
++++ b/parse/DoubleValueRefParser.cpp
+@@ -188,15 +188,17 @@ parse::double_parser_rules::double_parser_rules(
+ 
+ namespace parse {
+     bool double_free_variable(std::string& text) {
++        const auto& tok = GetLexer();
++
+         boost::spirit::qi::in_state_type in_state;
+-        parse::detail::simple_double_parser_rules simple_double_rules(lexer::tok);
++        parse::detail::simple_double_parser_rules simple_double_rules(tok);
+ 
+         text_iterator first = text.begin();
+         text_iterator last = text.end();
+-        token_iterator it = lexer::tok.begin(first, last);
++        token_iterator it = tok.begin(first, last);
+ 
+         bool success = boost::spirit::qi::phrase_parse(
+-            it, lexer::tok.end(), simple_double_rules.free_variable_name, in_state("WS")[lexer::tok.self]);
++            it, tok.end(), simple_double_rules.free_variable_name, in_state("WS")[tok.self]);
+ 
+         return success;
+     }
+diff --git a/parse/EmpireStatsParser.cpp b/parse/EmpireStatsParser.cpp
+index 974fa5dcbab..652e780e20c 100644
+--- a/parse/EmpireStatsParser.cpp
++++ b/parse/EmpireStatsParser.cpp
+@@ -98,7 +98,7 @@ namespace parse {
+ 
+         for (const auto& file : ListDir(path, IsFOCScript)) {
+             start_rule_payload stats_;
+-            if (detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, stats_)) {
++            if (detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, stats_)) {
+                 for (auto& stat : stats_) {
+                     auto maybe_inserted = all_stats.emplace(stat.first, std::move(stat.second));
+                     if (!maybe_inserted.second) {
+diff --git a/parse/EncyclopediaParser.cpp b/parse/EncyclopediaParser.cpp
+index 06fd2dd50ee..3fed0882a48 100644
+--- a/parse/EncyclopediaParser.cpp
++++ b/parse/EncyclopediaParser.cpp
+@@ -90,7 +90,7 @@ namespace parse {
+         ScopedTimer timer("Encyclopedia Parsing");
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, ArticleMap>(lexer::tok, file, articles);
++            detail::parse_file<grammar, ArticleMap>(GetLexer(), file, articles);
+ 
+         return articles;
+     }
+diff --git a/parse/FieldsParser.cpp b/parse/FieldsParser.cpp
+index 3c933a6a8d1..a0ec27ac13d 100644
+--- a/parse/FieldsParser.cpp
++++ b/parse/FieldsParser.cpp
+@@ -117,7 +117,7 @@ namespace parse {
+         ScopedTimer timer("Fields Parsing");
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, field_types);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, field_types);
+ 
+         return field_types;
+     }
+diff --git a/parse/FleetPlansParser.cpp b/parse/FleetPlansParser.cpp
+index 7235091220c..ef39bb5e800 100644
+--- a/parse/FleetPlansParser.cpp
++++ b/parse/FleetPlansParser.cpp
+@@ -84,7 +84,7 @@ namespace parse {
+     start_rule_payload fleet_plans(const boost::filesystem::path& path) {
+         start_rule_payload fleet_plans_;
+         fleet_plans_.reserve(32);   // guesstimate of enough space
+-        detail::parse_file<grammar, start_rule_payload>(lexer::tok, path, fleet_plans_);
++        detail::parse_file<grammar, start_rule_payload>(GetLexer(), path, fleet_plans_);
+         return fleet_plans_;
+     }
+ }
+diff --git a/parse/IntValueRefParser.cpp b/parse/IntValueRefParser.cpp
+index 5c420578c66..4ba5e4bf1ea 100644
+--- a/parse/IntValueRefParser.cpp
++++ b/parse/IntValueRefParser.cpp
+@@ -200,15 +200,17 @@ parse::int_arithmetic_rules::int_arithmetic_rules(
+ 
+ namespace parse {
+     bool int_free_variable(std::string& text) {
++        const auto& tok = GetLexer();
++
+         boost::spirit::qi::in_state_type in_state;
+-        parse::detail::simple_int_parser_rules simple_int_rules(lexer::tok);
++        parse::detail::simple_int_parser_rules simple_int_rules(tok);
+ 
+         text_iterator first = text.begin();
+         text_iterator last = text.end();
+-        token_iterator it = lexer::tok.begin(first, last);
++        token_iterator it = tok.begin(first, last);
+ 
+         bool success = boost::spirit::qi::phrase_parse(
+-            it, lexer::tok.end(), simple_int_rules.free_variable_name, in_state("WS")[lexer::tok.self]);
++            it, tok.end(), simple_int_rules.free_variable_name, in_state("WS")[tok.self]);
+ 
+         return success;
+     }
+diff --git a/parse/ItemsParser.cpp b/parse/ItemsParser.cpp
+index a3bc86704da..b856ac00202 100644
+--- a/parse/ItemsParser.cpp
++++ b/parse/ItemsParser.cpp
+@@ -58,14 +58,14 @@ namespace parse {
+     start_rule_payload items(const boost::filesystem::path& path) {
+         start_rule_payload items_;
+         items_.reserve(128);    // should be more than enough as of this writing
+-        detail::parse_file<grammar, start_rule_payload>(lexer::tok, path, items_);
++        detail::parse_file<grammar, start_rule_payload>(GetLexer(), path, items_);
+         return items_;
+     }
+ 
+     start_rule_payload starting_buildings(const boost::filesystem::path& path) {
+         start_rule_payload starting_buildings_;
+         starting_buildings_.reserve(32); // should be more than enough as of this writing...
+-        detail::parse_file<grammar, start_rule_payload>(lexer::tok, path, starting_buildings_);
++        detail::parse_file<grammar, start_rule_payload>(GetLexer(), path, starting_buildings_);
+         return starting_buildings_;
+     }
+ }
+diff --git a/parse/Lexer.cpp b/parse/Lexer.cpp
+index 00e10448614..0bee7995f33 100644
+--- a/parse/Lexer.cpp
++++ b/parse/Lexer.cpp
+@@ -119,5 +119,3 @@ lexer::lexer() :
+         |    end_of_line_comment
+         ;
+ }
+-
+-const lexer lexer::tok{};
+diff --git a/parse/Lexer.h b/parse/Lexer.h
+index 5f7a65b8749..42fa4b1c06b 100644
+--- a/parse/Lexer.h
++++ b/parse/Lexer.h
+@@ -80,9 +80,13 @@ struct lexer : boost::spirit::lex::lexer<spirit_lexer_base_type> {
+     static inline const std::string int_regex{"\\d+"};
+     static inline const std::string double_regex{"\\d+\\.\\d*|\\d*\\.\\d+"};
+     static inline const std::string string_regex{"\\\"[^\\\"]*\\\""};
+-    static const lexer tok;
+ };
+ 
++inline const lexer& GetLexer() {
++    static const lexer tok;
++    return tok;
++}
++
+ /** The type of iterator passed to the script file parser by the script file
+     lexer. */
+ typedef lexer::iterator_type token_iterator;
+diff --git a/parse/MonsterFleetPlansParser.cpp b/parse/MonsterFleetPlansParser.cpp
+index 9362f619f6e..197e935c7c5 100644
+--- a/parse/MonsterFleetPlansParser.cpp
++++ b/parse/MonsterFleetPlansParser.cpp
+@@ -125,7 +125,7 @@ namespace {
+ namespace parse {
+     start_rule_payload monster_fleet_plans(const boost::filesystem::path& path) {
+         start_rule_payload monster_fleet_plans_;
+-        detail::parse_file<grammar, start_rule_payload>(lexer::tok, path, monster_fleet_plans_);
++        detail::parse_file<grammar, start_rule_payload>(GetLexer(), path, monster_fleet_plans_);
+         return monster_fleet_plans_;
+     }
+ }
+diff --git a/parse/NamedValueRefParser.cpp b/parse/NamedValueRefParser.cpp
+index 0d9b23e3c5b..7dd404eb205 100644
+--- a/parse/NamedValueRefParser.cpp
++++ b/parse/NamedValueRefParser.cpp
+@@ -133,7 +133,7 @@ namespace parse {
+         ScopedTimer timer("Named ValueRef Parsing");
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, named_value_refs);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, named_value_refs);
+ 
+         for (auto& k_v : named_value_refs)
+             ErrorLogger() << "Should have not returned anything: named_value_refs : " << k_v.first;
+diff --git a/parse/PoliciesParser.cpp b/parse/PoliciesParser.cpp
+index 4d60599bcf8..0a12444ddf5 100644
+--- a/parse/PoliciesParser.cpp
++++ b/parse/PoliciesParser.cpp
+@@ -227,7 +227,7 @@ namespace parse {
+         ScopedTimer timer("Policies Parsing");
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, policies_);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, policies_);
+ 
+         return policies_;
+     }
+diff --git a/parse/ShipDesignsParser.cpp b/parse/ShipDesignsParser.cpp
+index 0dc6fd4ad07..66f707560ee 100644
+--- a/parse/ShipDesignsParser.cpp
++++ b/parse/ShipDesignsParser.cpp
+@@ -227,6 +227,8 @@ namespace parse {
+ 
+         ScopedTimer timer("Ship Designs Parsing");
+ 
++        const auto& tok = GetLexer();
++
+         for (auto& file : ListDir(path, IsFOCScript)) {
+             TraceLogger() << "Parse ship design file " << file.filename();
+             if (file.filename() == "ShipDesignOrdering.focs.txt" ) {
+@@ -237,7 +239,7 @@ namespace parse {
+             try {
+                 boost::optional<std::unique_ptr<ParsedShipDesign>> maybe_design;
+                 auto partial_result = detail::parse_file<grammar, boost::optional<std::unique_ptr<ParsedShipDesign>>>(
+-                    lexer::tok, file, maybe_design);
++                    tok, file, maybe_design);
+ 
+                 if (!partial_result || !maybe_design)
+                     continue;
+@@ -252,7 +254,7 @@ namespace parse {
+         if (!manifest_file.empty()) {
+             try {
+                 detail::parse_file<manifest_grammar, std::vector<boost::uuids::uuid>>(
+-                    lexer::tok, manifest_file, ordering);
++                    tok, manifest_file, ordering);
+ 
+             } catch (const std::runtime_error& e) {
+                 ErrorLogger() << "Failed to parse ship design manifest in " << manifest_file << " from " << path
+diff --git a/parse/ShipHullsParser.cpp b/parse/ShipHullsParser.cpp
+index 96c603eaea9..68f6694d67d 100644
+--- a/parse/ShipHullsParser.cpp
++++ b/parse/ShipHullsParser.cpp
+@@ -211,7 +211,7 @@ namespace parse {
+         start_rule_payload hulls;
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, hulls);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, hulls);
+ 
+         return hulls;
+     }
+diff --git a/parse/ShipPartsParser.cpp b/parse/ShipPartsParser.cpp
+index aca961da0c1..338b9e08f27 100644
+--- a/parse/ShipPartsParser.cpp
++++ b/parse/ShipPartsParser.cpp
+@@ -183,7 +183,7 @@ namespace parse {
+         start_rule_payload parts;
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, parts);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, parts);
+ 
+         return parts;
+     }
+diff --git a/parse/SpecialsParser.cpp b/parse/SpecialsParser.cpp
+index e0f52d644eb..8955b7caf5d 100644
+--- a/parse/SpecialsParser.cpp
++++ b/parse/SpecialsParser.cpp
+@@ -145,7 +145,7 @@ namespace parse {
+         start_rule_payload specials_;
+ 
+         for (const auto& file : ListDir(path, IsFOCScript))
+-            detail::parse_file<grammar, start_rule_payload>(lexer::tok, file, specials_);
++            detail::parse_file<grammar, start_rule_payload>(GetLexer(), file, specials_);
+ 
+         return specials_;
+     }
+diff --git a/parse/StringValueRefParser.cpp b/parse/StringValueRefParser.cpp
+index 65858735aae..7c169ae507a 100644
+--- a/parse/StringValueRefParser.cpp
++++ b/parse/StringValueRefParser.cpp
+@@ -203,12 +203,14 @@ namespace parse {
+     bool string_free_variable(std::string& text) {
+         boost::spirit::qi::in_state_type in_state;
+ 
++        const auto& tok = GetLexer();
++
+         text_iterator first = text.begin();
+         text_iterator last = text.end();
+-        token_iterator it = lexer::tok.begin(first, last);
++        token_iterator it = tok.begin(first, last);
+ 
+         bool success = boost::spirit::qi::phrase_parse(
+-            it, lexer::tok.end(), lexer::tok.GalaxySeed_, in_state("WS")[lexer::tok.self]);
++            it, tok.end(), tok.GalaxySeed_, in_state("WS")[tok.self]);
+ 
+         return success;
+     }
