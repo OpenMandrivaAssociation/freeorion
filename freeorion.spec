@@ -20,7 +20,8 @@ Source1:	%{name}.png
 #Patch0:		https://github.com/freeorion/freeorion/pull/5045.patch
 #Patch1:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5054.patch
 #Patch2:		https://github.com/freeorion/freeorion/pull/5055.patch
-Patch3:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5062.patch
+#Patch3:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5062.patch
+Patch4:		https://github.com/freeorion/freeorion/pull/5065.patch
 
 
 Requires:	%{name}-data = %{version}
