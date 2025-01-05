@@ -6,7 +6,7 @@ diff -uraN freeorion-0.5.1/UI/Sound.cpp omv-freeorion-0.5.1/UI/Sound.cpp
  
      m_initialized = false;
 -    DebugLogger() << "Audio " << (m_initialized ? "enabled." : "disabled.");
-+#    DebugLogger() << "Audio " << (m_initialized ? "enabled." : "disabled.");
++
  }
  
  void Sound::Impl::InitOpenAL() {
