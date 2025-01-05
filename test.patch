@@ -1,0 +1,12 @@
+diff -uraN freeorion-0.5.1/UI/Sound.cpp omv-freeorion-0.5.1/UI/Sound.cpp
+--- freeorion-0.5.1/UI/Sound.cpp	2024-12-30 19:43:59.000000000 +0100
++++ omv-freeorion-0.5.1/UI/Sound.cpp	2025-01-05 18:07:57.665342153 +0100
+@@ -287,7 +287,7 @@
+     m_temporary_disable_count = 0;
+ 
+     m_initialized = false;
+-    DebugLogger() << "Audio " << (m_initialized ? "enabled." : "disabled.");
++#    DebugLogger() << "Audio " << (m_initialized ? "enabled." : "disabled.");
+ }
+ 
+ void Sound::Impl::InitOpenAL() {
