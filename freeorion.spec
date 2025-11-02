@@ -17,6 +17,7 @@ Group:		Games/Strategy
 Url:		https://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}/%{name}-%{version}.tar.gz
 Source1:	%{name}.png
+Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5287.patch
 
 
 Requires:	%{name}-data = %{version}
