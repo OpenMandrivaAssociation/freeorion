@@ -1,0 +1,131 @@
+From bc315bb4fdb48a6322d013aa49fcf5a0ea24216a Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 6 Sep 2025 09:33:56 +0200
+Subject: [PATCH 1/3] quiet warnings
+
+---
+ UI/About.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/UI/About.cpp b/UI/About.cpp
+index fed0a0a2cf5..58ff4a121e2 100644
+--- a/UI/About.cpp
++++ b/UI/About.cpp
+@@ -39,22 +39,22 @@ About::About():
+ void About::CompleteConstruction() {
+     CUIWnd::CompleteConstruction();
+ 
+-    if (m_done = Wnd::Create<CUIButton>(UserString("DONE"))) {
++    if ((m_done = Wnd::Create<CUIButton>(UserString("DONE")))) {
+         AttachChild(m_done);
+         m_done->LeftClickedSignal.connect([this]() { EndRun(); });
+     }
+ 
+-    if (m_license = Wnd::Create<CUIButton>(UserString("LICENSE"))) {
++    if ((m_license = Wnd::Create<CUIButton>(UserString("LICENSE")))) {
+         AttachChild(m_license);
+         m_license->LeftClickedSignal.connect([this]() { ShowLicense(); });
+     }
+ 
+-    if (m_vision = Wnd::Create<CUIButton>(UserString("VISION"))) {
++    if ((m_vision = Wnd::Create<CUIButton>(UserString("VISION")))) {
+         AttachChild(m_vision);
+         m_vision->LeftClickedSignal.connect([this]() { ShowVision(); });
+     }
+ 
+-    if (m_info = GG::Wnd::Create<CUIMultiEdit>(UserString("FREEORION_VISION"), GG::MULTI_WORDBREAK | GG::MULTI_READ_ONLY))
++    if ((m_info = GG::Wnd::Create<CUIMultiEdit>(UserString("FREEORION_VISION"), GG::MULTI_WORDBREAK | GG::MULTI_READ_ONLY)))
+         AttachChild(m_info);
+ 
+     DoLayout();
+
+From 134cfe04e50b3fb0e7f30933baa73b811af94ca5 Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Fri, 5 Sep 2025 08:12:11 +0200
+Subject: [PATCH 2/3] remove Boost system dependency. apparently only exists
+ for backwards compatibility in recent Boost versions.
+
+---
+ CMakeLists.txt              | 1 -
+ GG/CMakeLists.txt           | 2 +-
+ GG/test/unit/CMakeLists.txt | 1 -
+ test/UI/CMakeLists.txt      | 1 -
+ 4 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8a43f713dfb..1c269a219ed 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -286,7 +286,6 @@ find_package(Boost ${MINIMUM_BOOST_VERSION}
+         log_setup
+         random
+         serialization
+-        system
+         thread
+     REQUIRED)
+ 
+diff --git a/GG/CMakeLists.txt b/GG/CMakeLists.txt
+index 6c3b282d595..f386f207c2f 100644
+--- a/GG/CMakeLists.txt
++++ b/GG/CMakeLists.txt
+@@ -66,7 +66,7 @@ endif()
+ 
+ set(MINIMUM_BOOST_VERSION 1.69.0)
+ 
+-find_package(Boost ${MINIMUM_BOOST_VERSION} COMPONENTS filesystem regex system REQUIRED)
++find_package(Boost ${MINIMUM_BOOST_VERSION} COMPONENTS filesystem regex REQUIRED)
+ 
+ find_package(OpenGL REQUIRED)
+ find_package(GLEW REQUIRED)
+diff --git a/GG/test/unit/CMakeLists.txt b/GG/test/unit/CMakeLists.txt
+index c7585b029c6..be0877695fd 100644
+--- a/GG/test/unit/CMakeLists.txt
++++ b/GG/test/unit/CMakeLists.txt
+@@ -16,7 +16,6 @@ add_executable(gg_unittest
+ target_link_libraries(gg_unittest
+     GiGi
+     Boost::boost
+-    Boost::system
+     Boost::unit_test_framework
+ )
+ 
+diff --git a/test/UI/CMakeLists.txt b/test/UI/CMakeLists.txt
+index 80bf78860eb..4008fd5feac 100644
+--- a/test/UI/CMakeLists.txt
++++ b/test/UI/CMakeLists.txt
+@@ -23,7 +23,6 @@ add_library(fo_acceptance_runner STATIC
+ 
+ target_link_libraries(fo_acceptance_runner
+     PUBLIC
+-        Boost::system
+         GiGi::GiGi
+         GLEW::GLEW
+         ${SDL_LIBRARIES}
+
+From 6b564a9f4e24e7611e14bff9ecc2fd183165ab7a Mon Sep 17 00:00:00 2001
+From: geoffthemedio <geoffthemedio@gmail.com>
+Date: Sat, 6 Sep 2025 10:08:43 +0200
+Subject: [PATCH 3/3] OSX workaround
+
+---
+ CMakeLists.txt | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1c269a219ed..a501fe08ec3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -289,6 +289,13 @@ find_package(Boost ${MINIMUM_BOOST_VERSION}
+         thread
+     REQUIRED)
+ 
++if(APPLE)
++find_package(Boost ${MINIMUM_BOOST_VERSION}
++    COMPONENTS
++        system
++    REQUIRED)
++endif()
++
+ message(STATUS "Boost version detected ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}")
+ 
+ find_package(Boost OPTIONAL_COMPONENTS python${Boost_PYTHON_SUFFIX})
