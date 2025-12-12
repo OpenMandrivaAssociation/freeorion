@@ -16,14 +16,14 @@ License:	GPLv2+
 Group:		Games/Strategy
 Url:		https://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}/%{name}-%{version}.tar.gz
-Source1:	%{name}.png
 Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5287.patch
-
 
 Requires:	%{name}-data = %{version}
 Requires:	ogre
 
-BuildRequires:	cmake
+BuildSystem:	cmake
+BuildOption:	-DRELEASE_COMPILE_FLAGS="%{optflags}"
+BuildOption:	-DBUILD_SHARED_LIBS=OFF
 BuildRequires:	boost-devel
 BuildRequires:  boost-python-devel
 BuildRequires:	jpeg-devel
@@ -54,9 +54,10 @@ is inspired by the tradition of the Master of Orion games, but is not a clone
 or remake of that series or any other game.
 
 %files
-%{_iconsdir}/%{name}.png
-%{_gamesbindir}/freeorion*
-%{_datadir}/applications/mandriva-freeorion.desktop
+%{_datadir}/icons/*/*/*/org.freeorion.FreeOrion.png
+%{_bindir}/freeorion*
+%{_datadir}/applications/org.freeorion.FreeOrion.desktop
+%{_datadir}/metainfo/org.freeorion.FreeOrion.metainfo.xml
 
 #----------------------------------------------------------------------------
 
@@ -70,59 +71,33 @@ License:	CC-BY-SA
 Data files for FreeOrion game
 
 %files data
-%{_gamesdatadir}/freeorion
+%{_datadir}/freeorion
 
 #----------------------------------------------------------------------------
 
-%prep
-%autosetup -n %{name}-%{version} -p1
-
-%build
+%conf -p
 sed -e "s/-O3//" -i CMakeLists.txt
 # System resource usage is extremely high so disable extra flags and parallel build
 #global optflags -O2
 # (but the build boxes can handle it...)
 export LDFLAGS="%{ldflags} -Wl,--as-needed"
 
-%cmake \
-	-DOpenGL_GL_PREFERENCE=LEGACY \
-	-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-	-DPYTHON_EXECUTABLE=%{_bindir}/python \
-	-DRELEASE_COMPILE_FLAGS="%{optflags}" \
-	-DBUILD_SHARED_LIBS=OFF
+%install -a
+install -d -m 755 %{buildroot}%{_bindir}
+install -m 755 _OMV_rpm_build/freeorion %{buildroot}%{_bindir}/freeorion.real
+install -m 755 _OMV_rpm_build/freeoriond %{buildroot}%{_bindir}/freeoriond
+install -m 755 _OMV_rpm_build/freeorionca %{buildroot}%{_bindir}/freeorionca
+#install -m755 _OMV_rpm_build/*.so %{buildroot}%{_libdir}/%{name}/
 
-%make_build VERBOSE=1
+# No point in shipping the static libs
+rm %{buildroot}%{_libdir}/*.a %{buildroot}%{_libdir}/%{name}/*.a
 
-%install
-install -d -m 755 %{buildroot}%{_gamesbindir}
-install -m 755 build/freeorion %{buildroot}%{_gamesbindir}/freeorion.real
-install -m 755 build/freeoriond %{buildroot}%{_gamesbindir}/freeoriond
-install -m 755 build/freeorionca %{buildroot}%{_gamesbindir}/freeorionca
-#install -m755 build/*.so %{buildroot}%{_libdir}/%{name}/
-
-cat > %{buildroot}%{_gamesbindir}/freeorion <<EOF
+cat > %{buildroot}%{_bindir}/freeorion <<EOF
 #!/bin/sh
-cd %{_gamesdatadir}/%{name}
-%{_gamesbindir}/freeorion.real
+cd %{_datadir}/%{name}
+%{_bindir}/freeorion.real
 EOF
-chmod +x %{buildroot}%{_gamesbindir}/freeorion
+chmod +x %{buildroot}%{_bindir}/freeorion
 
-install -d -m 755 %{buildroot}%{_gamesdatadir}/%{name}
-cp -ar default %{buildroot}%{_gamesdatadir}/%{name}
-
-install -d -m 755 %{buildroot}%{_iconsdir}
-install -m 644 %{SOURCE1} %{buildroot}%{_iconsdir}
-
-install -d -m 755 %{buildroot}%{_datadir}/applications
-cat > %{buildroot}%{_datadir}/applications/mandriva-%{name}.desktop << EOF
-[Desktop Entry]
-Type=Application
-Encoding=UTF-8
-Name=FreeOrion
-Comment=Turn-based space empire and galactic conquest
-Exec=%{_gamesbindir}/%{name}
-Path=%{_gamesbindir}
-Icon=%{name}
-Terminal=false
-Categories=Game;StrategyGame;
-EOF
+install -d -m 755 %{buildroot}%{_datadir}/%{name}
+cp -ar default %{buildroot}%{_datadir}/%{name}
