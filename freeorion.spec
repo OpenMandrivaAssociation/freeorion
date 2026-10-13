@@ -37,7 +37,7 @@ BuildRequires:	pkgconfig(ogg)
 BuildRequires:	pkgconfig(OGRE)
 BuildRequires:	pkgconfig(OIS)
 BuildRequires:	pkgconfig(openal)
-BuildRequires:	pkgconfig(python)
+
 BuildRequires:	pkgconfig(sdl)
 BuildRequires:	pkgconfig(vorbis)
 BuildRequires:	pkgconfig(zlib)
