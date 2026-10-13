@@ -16,6 +16,8 @@ License:	GPLv2+
 Group:		Games/Strategy
 Url:		https://www.freeorion.org
 Source0:	https://github.com/freeorion/freeorion/archive/v%{version}/%{name}-%{version}.tar.gz
+# Python 3.15 removed Py_GetProgramFullPath, Py_GetPrefix and Py_GetPath.
+Patch0:		freeorion-0.5.1.2-python315.patch
 # dropped (no longer applies): Patch0:		https://patch-diff.githubusercontent.com/raw/freeorion/freeorion/pull/5287.patch
 
 Requires:	%{name}-data = %{version}
